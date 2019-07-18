@@ -1,30 +1,56 @@
 UnownPicPointers::
-; entries correspond to Unown letters
+; entries correspond to Unown letters, two apiece
 	table_width 3 * 2
-	dba_pics UnownAFrontpic, UnownABackpic
-	dba_pics UnownBFrontpic, UnownBBackpic
-	dba_pics UnownCFrontpic, UnownCBackpic
-	dba_pics UnownDFrontpic, UnownDBackpic
-	dba_pics UnownEFrontpic, UnownEBackpic
-	dba_pics UnownFFrontpic, UnownFBackpic
-	dba_pics UnownGFrontpic, UnownGBackpic
-	dba_pics UnownHFrontpic, UnownHBackpic
-	dba_pics UnownIFrontpic, UnownIBackpic
-	dba_pics UnownJFrontpic, UnownJBackpic
-	dba_pics UnownKFrontpic, UnownKBackpic
-	dba_pics UnownLFrontpic, UnownLBackpic
-	dba_pics UnownMFrontpic, UnownMBackpic
-	dba_pics UnownNFrontpic, UnownNBackpic
-	dba_pics UnownOFrontpic, UnownOBackpic
-	dba_pics UnownPFrontpic, UnownPBackpic
-	dba_pics UnownQFrontpic, UnownQBackpic
-	dba_pics UnownRFrontpic, UnownRBackpic
-	dba_pics UnownSFrontpic, UnownSBackpic
-	dba_pics UnownTFrontpic, UnownTBackpic
-	dba_pics UnownUFrontpic, UnownUBackpic
-	dba_pics UnownVFrontpic, UnownVBackpic
-	dba_pics UnownWFrontpic, UnownWBackpic
-	dba_pics UnownXFrontpic, UnownXBackpic
-	dba_pics UnownYFrontpic, UnownYBackpic
-	dba_pics UnownZFrontpic, UnownZBackpic
+	dba UnownAFrontpic
+	dba UnownABackpic
+	dba UnownBFrontpic
+	dba UnownBBackpic
+	dba UnownCFrontpic
+	dba UnownCBackpic
+	dba UnownDFrontpic
+	dba UnownDBackpic
+	dba UnownEFrontpic
+	dba UnownEBackpic
+	dba UnownFFrontpic
+	dba UnownFBackpic
+	dba UnownGFrontpic
+	dba UnownGBackpic
+	dba UnownHFrontpic
+	dba UnownHBackpic
+	dba UnownIFrontpic
+	dba UnownIBackpic
+	dba UnownJFrontpic
+	dba UnownJBackpic
+	dba UnownKFrontpic
+	dba UnownKBackpic
+	dba UnownLFrontpic
+	dba UnownLBackpic
+	dba UnownMFrontpic
+	dba UnownMBackpic
+	dba UnownNFrontpic
+	dba UnownNBackpic
+	dba UnownOFrontpic
+	dba UnownOBackpic
+	dba UnownPFrontpic
+	dba UnownPBackpic
+	dba UnownQFrontpic
+	dba UnownQBackpic
+	dba UnownRFrontpic
+	dba UnownRBackpic
+	dba UnownSFrontpic
+	dba UnownSBackpic
+	dba UnownTFrontpic
+	dba UnownTBackpic
+	dba UnownUFrontpic
+	dba UnownUBackpic
+	dba UnownVFrontpic
+	dba UnownVBackpic
+	dba UnownWFrontpic
+	dba UnownWBackpic
+	dba UnownXFrontpic
+	dba UnownXBackpic
+	dba UnownYFrontpic
+	dba UnownYBackpic
+	dba UnownZFrontpic
+	dba UnownZBackpic
 	assert_table_length NUM_UNOWN
