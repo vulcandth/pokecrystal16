@@ -394,8 +394,6 @@ SetMinTwoStepWildEncounterCooldown:
 
 Dummy_CheckEnabledMapEventsBit5:
 	call CheckEnabledMapEventsBit5
-	ret z
-	call SetXYCompareFlags
 	ret
 
 RunSceneScript:

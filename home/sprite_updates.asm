@@ -4,7 +4,7 @@ DisableSpriteUpdates::
 	ld a, [wStateFlags]
 	res SPRITE_UPDATES_DISABLED_F, a
 	ld [wStateFlags], a
-	ld a, FALSE
+	xor a
 	ld [wSpriteUpdatesEnabled], a
 	ret
 
