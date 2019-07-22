@@ -1735,7 +1735,7 @@ LinkTrade:
 	farcall Link_WaitBGMap
 	call ScrollingMenuJoypad
 	push af
-	call Call_ExitMenu
+	call ExitMenu
 	call WaitBGMap2
 	pop af
 	bit 1, a
