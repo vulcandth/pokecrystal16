@@ -1,3 +1,7 @@
+	dname "EGG"
+	dname "?????"
+	dname "?????"
+	dname "?????"
 PokemonNames::
 	table_width NAME_LENGTH - 1
 	dname "BULBASAUR"
@@ -252,10 +256,3 @@ PokemonNames::
 	dname "HO-OH"
 	dname "CELEBI"
 	assert_table_length NUM_POKEMON
-	dname "?????"
-	dname "EGG"
-	assert_table_length EGG
-	dname "?????"
-	dname "?????"
-	dname "?????"
-	assert_table_length $100
