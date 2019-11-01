@@ -1248,9 +1248,7 @@ PlaceMoveScreenLeftArrow:
 	ld a, [hl]
 	and a
 	jr z, .prev
-	cp EGG
-	jr z, .prev
-	cp NUM_POKEMON + 1
+	cp MON_TABLE_ENTRIES + 1
 	jr c, .legal
 
 .prev
@@ -1281,9 +1279,7 @@ PlaceMoveScreenRightArrow:
 	ret z
 	and a
 	jr z, .next
-	cp EGG
-	jr z, .next
-	cp NUM_POKEMON + 1
+	cp MON_TABLE_ENTRIES + 1
 	jr c, .legal
 
 .next
