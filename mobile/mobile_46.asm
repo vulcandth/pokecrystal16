@@ -6404,7 +6404,6 @@ CheckCaughtMemMon:
 	push de
 	push hl
 	ld a, [wTempSpecies]
-	dec a
 	call CheckCaughtMon
 	pop hl
 	pop de
@@ -6414,7 +6413,6 @@ CheckSeenMemMon:
 	push de
 	push hl
 	ld a, [wTempSpecies]
-	dec a
 	call CheckSeenMon
 	pop hl
 	pop de
