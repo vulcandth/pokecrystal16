@@ -1,11 +1,14 @@
 MACRO npctrade
 ; dialog set, requested mon, offered mon, nickname, dvs, item, OT ID, OT name, gender requested
-	db \1, \2, \3
-	dname \4, NAME_LENGTH
+	db \1
+	dw \2, \3
+	dname \4, MON_NAME_LENGTH
 	db \5, \6, \7
-	dw \8
-	dname \9, NAME_LENGTH
-	db \<10>, 0
+	shift
+	dw \7
+	dname \8, PLAYER_NAME_LENGTH
+	db \9
+	db 0, 0
 ENDM
 
 NPCTrades:
