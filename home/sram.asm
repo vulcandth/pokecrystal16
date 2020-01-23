@@ -13,11 +13,14 @@ OpenSRAM::
 	ld [rRAMG], a
 ; select sram bank
 	pop af
+	ldh [hSRAMBank], a
 	ld [rRAMB], a
 	ret
 
 CloseSRAM::
 	push af
+	ld a, -1
+	ldh [hSRAMBank], a
 	ld a, RAMG_SRAM_DISABLE
 ; reset clock latch for next time
 	ld [rRTCLATCH], a

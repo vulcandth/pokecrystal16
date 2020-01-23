@@ -3,6 +3,7 @@ StopRTC: ; unreferenced
 	ld [rRAMG], a
 	call LatchClock
 	ld a, RAMB_RTC_DH
+	ldh [hSRAMBank], a
 	ld [rRAMB], a
 	ld a, [rRTCREG]
 	set B_RAMB_RTC_DH_HALT, a
@@ -15,6 +16,7 @@ StartRTC:
 	ld [rRAMG], a
 	call LatchClock
 	ld a, RAMB_RTC_DH
+	ldh [hSRAMBank], a
 	ld [rRAMB], a
 	ld a, [rRTCREG]
 	res B_RAMB_RTC_DH_HALT, a
@@ -79,9 +81,11 @@ SaveRTC:
 	call LatchClock
 	ld hl, rRTCREG
 	ld a, RAMB_RTC_DH
+	ldh [hSRAMBank], a
 	ld [rRAMB], a
 	res B_RAMB_RTC_DH_CARRY, [hl]
 	ld a, BANK(sRTCStatusFlags)
+	ldh [hSRAMBank], a
 	ld [rRAMB], a
 	xor a
 	ld [sRTCStatusFlags], a
