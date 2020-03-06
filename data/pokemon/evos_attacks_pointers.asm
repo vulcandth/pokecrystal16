@@ -1,7 +1,12 @@
 ; Evolutions and attacks are grouped together since they're both checked at level-up.
 
 EvosAttacksPointers::
-	table_width 2, EvosAttacksPointers
+	indirect_table 2, 1
+	indirect_entries NUM_POKEMON, EvosAttacksPointers1
+	indirect_table_end
+
+EvosAttacksPointers1:
+	table_width 2, EvosAttacksPointers1
 	dw BulbasaurEvosAttacks
 	dw IvysaurEvosAttacks
 	dw VenusaurEvosAttacks
