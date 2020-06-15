@@ -2445,6 +2445,13 @@ CheckTimeCapsuleCompatibility:
 	ld c, NUM_MOVES
 .move_next
 	ld a, [hli]
+	push hl
+	call GetMoveIndexFromID
+	ld a, h
+	and a
+	ld a, l
+	pop hl
+	jr nz, .move_too_new
 	cp STRUGGLE + 1
 	jr nc, .move_too_new
 	dec c
@@ -2466,6 +2473,8 @@ CheckTimeCapsuleCompatibility:
 
 .move_too_new
 	push bc
+	dec hl
+	ld a, [hl]
 	ld [wNamedObjectIndex], a
 	call GetMoveName
 	call CopyName1
