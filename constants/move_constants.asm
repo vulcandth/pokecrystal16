@@ -261,6 +261,10 @@ DEF NUM_ATTACKS EQU const_value - 1
 
 DEF CANNOT_MOVE EQU $ff
 
+	if NUM_ATTACKS > $3fff
+		fail "Too many moves defined!"
+	endc
+
 ; Battle animations use the same constants as the moves
 	const ANIM_SWEET_SCENT_2     ; fc
 ; Animations with negative IDs will play even when animations are disabled
