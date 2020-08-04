@@ -492,6 +492,10 @@ SaveBox:
 	ld hl, wBoxPartialData
 	ld bc, 2 * MONS_PER_BOX
 	call CopyBytes
+	call GetBoxAddress
+	ld b, a
+	ld c, 0
+	farcall BillsPC_ConvertBoxData
 	jp CloseSRAM
 
 SaveChecksum:
@@ -801,6 +805,9 @@ LoadIndexTables:
 LoadBox:
 	call GetBoxAddress
 	call LoadBoxAddress
+	lb bc, BANK(sBox), 1
+	ld de, sBox
+	farcall BillsPC_ConvertBoxData
 	call GetBoxPokemonIndexesAddress
 	call OpenSRAM
 	ld de, wBoxPartialData
