@@ -708,12 +708,8 @@ wDexListingCursorBackup:: db
 wBackupDexListingCursor:: db
 wBackupDexListingPage:: db
 wDexCurLocation:: db
-if DEF(_CRYSTAL11)
 wPokedexStatus:: db
 wPokedexDataEnd::
-else
-wPokedexDataEnd:: ds 1
-endc
 	ds 2
 
 NEXTU
@@ -1507,12 +1503,7 @@ wCreditsLYOverride:: db
 NEXTU
 ; pokedex
 wPrevDexEntryJumptableIndex:: db
-if DEF(_CRYSTAL11)
 wPrevDexEntryBackup:: db
-else
-wPrevDexEntryBackup::
-wPokedexStatus:: db
-endc
 wUnusedPokedexByte:: db
 
 NEXTU
