@@ -23,7 +23,7 @@ rom_obj := \
 
 pokecrystal_obj         := $(rom_obj:.o=.o)
 pokecrystal_debug_obj   := $(rom_obj:.o=_debug.o)
-pokecrystal11_vc_obj    := $(rom_obj:.o=_vc.o)
+pokecrystal_vc_obj    := $(rom_obj:.o=_vc.o)
 
 
 ### Build tools
