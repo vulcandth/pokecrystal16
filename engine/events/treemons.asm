@@ -158,12 +158,15 @@ GetTreeMon:
 	cp 8
 	jr nc, NoTreeMon
 	jr .skip
+.loop
+	inc hl
+	inc hl
+	inc hl
 .skip
 	ld a, [hli]
-	cp -1
-	jr nz, .skip
-	call SelectTreeMon
-	ret
+	inc a
+	jr nz, .loop
+	; fallthrough
 
 SelectTreeMon:
 ; Read a TreeMons table and pick one monster at random.
@@ -176,6 +179,7 @@ SelectTreeMon:
 	inc hl
 	inc hl
 	inc hl
+	inc hl
 	jr .loop
 
 .ok
@@ -184,9 +188,12 @@ SelectTreeMon:
 	jr z, NoTreeMon
 
 	ld a, [hli]
-	ld [wTempWildMonSpecies], a
-	ld a, [hl]
 	ld [wCurPartyLevel], a
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	call GetPokemonIDFromIndex
+	ld [wTempWildMonSpecies], a
 	scf
 	ret
 
