@@ -259,11 +259,12 @@ endc
 	ld hl, wOTPartyMons
 	ld de, wStringBuffer1
 	ld bc, 2 * PARTY_LENGTH + 15 ;6 preamble bytes, 2 replacement bytes, 1 stop byte, and 6 extra just in case
+	vc_hook Wireless_ExchangeBytes_5
 	call Serial_ExchangeBytes
 	ld hl, wLinkData
 	ld de, wOTPartyData
 	ld bc, SERIAL_PREAMBLE_LENGTH + NAME_LENGTH + 1 + PARTY_LENGTH + 1 + 2 + (PARTYMON_STRUCT_LENGTH + NAME_LENGTH * 2) * PARTY_LENGTH + 3
-	vc_hook Wireless_ExchangeBytes_5
+	vc_hook Wireless_ExchangeBytes_6
 	call Serial_ExchangeBytes
 	ld a, SERIAL_NO_DATA_BYTE
 	ld [de], a
@@ -271,7 +272,7 @@ endc
 	ld hl, wPlayerPatchLists
 	ld de, wOTPatchLists
 	ld bc, 200
-	vc_hook Wireless_ExchangeBytes_6
+	vc_hook Wireless_ExchangeBytes_7
 	call Serial_ExchangeBytes
 
 	ld a, [wLinkMode]
@@ -280,7 +281,7 @@ endc
 	ld hl, wLinkPlayerMail
 	ld de, wLinkOTMail
 	ld bc, wLinkPlayerMailEnd - wLinkPlayerMail
-	vc_hook Wireless_ExchangeBytes_7
+	vc_hook Wireless_ExchangeBytes_8
 	call ExchangeBytes
 
 .not_trading
