@@ -1,7 +1,6 @@
 SECTION "Egg Moves 2", ROMX
 
 EggMovePointers2::
-	table_width 2, EggMovePointers2
 	dw ChikoritaEggMoves
 	dw NoEggMoves2
 	dw NoEggMoves2
@@ -102,7 +101,7 @@ EggMovePointers2::
 	dw NoEggMoves2
 	dw NoEggMoves2
 	dw NoEggMoves2
-	assert_table_length NUM_POKEMON - JOHTO_POKEMON + 1
+.IndirectEnd::
 
 ChikoritaEggMoves:
 	dw VINE_WHIP

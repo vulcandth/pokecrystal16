@@ -22,17 +22,11 @@ MACRO tmhm
 ENDM
 
 BaseData::
-	; the parameter to indirect_table must be a compile-time constant, and BASE_DATA_SIZE is not
-	if ((__RGBDS_MAJOR__ << 24) | (__RGBDS_MINOR__ << 8) | __RGBDS_PATCH__) >= $400
-		; if this version of RGBDS supports asserts, just assert that the size is correct
-		assert $20 == BASE_DATA_SIZE, "Please adjust the table size (and this assertion) to match BASE_DATA_SIZE"
-	endc
-	indirect_table $20, 1
+	indirect_table BASE_DATA_SIZE, 1
 	indirect_entries NUM_POKEMON, BaseData1
 	indirect_table_end
 
 BaseData1:
-	table_width BASE_DATA_SIZE, BaseData1
 INCLUDE "data/pokemon/base_stats/bulbasaur.asm"
 INCLUDE "data/pokemon/base_stats/ivysaur.asm"
 INCLUDE "data/pokemon/base_stats/venusaur.asm"
@@ -284,4 +278,4 @@ INCLUDE "data/pokemon/base_stats/tyranitar.asm"
 INCLUDE "data/pokemon/base_stats/lugia.asm"
 INCLUDE "data/pokemon/base_stats/ho_oh.asm"
 INCLUDE "data/pokemon/base_stats/celebi.asm"
-	assert_table_length NUM_POKEMON
+.IndirectEnd::

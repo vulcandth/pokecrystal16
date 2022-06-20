@@ -1,7 +1,6 @@
 SECTION "Egg Moves 1", ROMX
 
 EggMovePointers1:
-	table_width 2, EggMovePointers1
 	dw BulbasaurEggMoves
 	dw NoEggMoves1
 	dw NoEggMoves1
@@ -153,7 +152,7 @@ EggMovePointers1:
 	dw NoEggMoves1
 	dw NoEggMoves1
 	dw NoEggMoves1
-	assert_table_length JOHTO_POKEMON - 1
+.IndirectEnd::
 
 BulbasaurEggMoves:
 	dw LIGHT_SCREEN

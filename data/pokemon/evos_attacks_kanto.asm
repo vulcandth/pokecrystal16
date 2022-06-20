@@ -1,7 +1,6 @@
 SECTION "Evolutions and Attacks 1", ROMX
 
 EvosAttacksPointers1::
-	table_width 2, EvosAttacksPointers1
 	dw BulbasaurEvosAttacks
 	dw IvysaurEvosAttacks
 	dw VenusaurEvosAttacks
@@ -153,7 +152,7 @@ EvosAttacksPointers1::
 	dw DragoniteEvosAttacks
 	dw MewtwoEvosAttacks
 	dw MewEvosAttacks
-	assert_table_length JOHTO_POKEMON - 1
+.IndirectEnd::
 
 BulbasaurEvosAttacks:
 	dbbw EVOLVE_LEVEL, 16, IVYSAUR

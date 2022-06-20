@@ -5,7 +5,6 @@ MoveDescriptions::
 	indirect_table_end
 
 MoveDescriptions1:
-	table_width 2, MoveDescriptions1
 	dw PoundDescription
 	dw KarateChopDescription
 	dw DoubleslapDescription
@@ -257,7 +256,7 @@ MoveDescriptions1:
 	dw RockSmashDescription
 	dw WhirlpoolDescription
 	dw BeatUpDescription
-	assert_table_length NUM_ATTACKS
+.IndirectEnd::
 
 InvalidMoveDescription:
 	db "?@"

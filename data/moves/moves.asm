@@ -17,7 +17,6 @@ Moves::
 	indirect_table_end
 
 Moves1:
-	table_width MOVE_LENGTH - 1, Moves1
 	move EFFECT_NORMAL_HIT,         40, NORMAL,        100, 35,   0      ;POUND
 	move EFFECT_NORMAL_HIT,         50, FIGHTING,      100, 25,   0      ;KARATE_CHOP
 	move EFFECT_MULTI_HIT,          15, NORMAL,         85, 10,   0      ;DOUBLESLAP
@@ -269,4 +268,4 @@ Moves1:
 	move EFFECT_DEFENSE_DOWN_HIT,   20, FIGHTING,      100, 15,  50      ;ROCK_SMASH
 	move EFFECT_TRAP_TARGET,        15, WATER,          70, 15,   0      ;WHIRLPOOL
 	move EFFECT_BEAT_UP,            10, DARK,          100, 10,   0      ;BEAT_UP
-	assert_table_length NUM_ATTACKS
+.IndirectEnd::

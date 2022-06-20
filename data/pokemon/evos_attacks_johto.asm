@@ -1,7 +1,6 @@
 SECTION "Evolutions and Attacks 2", ROMX
 
 EvosAttacksPointers2::
-	table_width 2, EvosAttacksPointers2
 	dw ChikoritaEvosAttacks
 	dw BayleefEvosAttacks
 	dw MeganiumEvosAttacks
@@ -102,7 +101,7 @@ EvosAttacksPointers2::
 	dw LugiaEvosAttacks
 	dw HoOhEvosAttacks
 	dw CelebiEvosAttacks
-	assert_table_length NUM_POKEMON - JOHTO_POKEMON + 1
+.IndirectEnd::
 
 ChikoritaEvosAttacks:
 	dbbw EVOLVE_LEVEL, 16, BAYLEEF
