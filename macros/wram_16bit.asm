@@ -1,30 +1,25 @@
-___wram_conversion_table: MACRO
+MACRO ___wram_conversion_table
 	; in:
 	; 1: name of the table; will be prefixed to all definitions
 	; 2: table size, in entries
 	; 3: locked ID table size
 	; 4: last allocations table size
 	; 5: cache size
-if (\2) > $FE
-	fail "16-bit conversion table error: too many table entries"
-elif (\2) < $20
-	fail "16-bit conversion table error: table is too small"
-elif ((\3) + (\4)) > (\2)
-	fail "16-bit conversion table error: too many fixed indexes"
-endc
+	assert (\2) <= $FE, \
+		"16-bit conversion table error: too many table entries"
+	assert (\2) >= $20, \
+		"16-bit conversion table error: too many table entries"
+	assert ((\3) + (\4)) <= (\2), \
+		"16-bit conversion table error: too many fixed indexes"
 
-if (\4) < 2
-	fail "16-bit conversion table error: recent allocations table must contain at least two entries"
-endc
+	assert (\4) >= 2, \
+		"16-bit conversion table error: recent allocations table must contain at least two entries"
 
-if (\5) & ((\5) - 1)
-	; value is neither zero nor a power of two
-	fail "16-bit conversion table error: invalid cache size"
-endc
+	assert !((\5) & ((\5) - 1)), \
+		"16-bit conversion table error: invalid cache size"
 
-if ((\3) + (\4) + (\5)) > $100
-	fail "16-bit conversion table error: cache would straddle a $100 alignment boundary"
-endc
+	assert ((\3) + (\4) + (\5)) <= $100, \
+		"16-bit conversion table error: cache would straddle a $100 alignment boundary"
 
 \1::
 
@@ -34,18 +29,18 @@ endc
 \1EntriesEnd::
 
 ; pad to a multiple of $100; ensure that the remaining values share the same high byte
-___total_bytes = 2 + (2 * (\2)) + (\3) + (\4) + (\5)
-if LOW(___total_bytes)
-	ds $100 - LOW(___total_bytes)
-endc
+	DEF ___total_bytes = 2 + (2 * (\2)) + (\3) + (\4) + (\5)
+	if LOW(___total_bytes)
+		ds $100 - LOW(___total_bytes)
+	endc
 
-if \5
-\1EntryCache:: ds \5
-endc
+	if \5
+	\1EntryCache:: ds \5
+	endc
 
-if \3
-\1LockedEntries:: ds \3
-endc
+	if \3
+	\1LockedEntries:: ds \3
+	endc
 
 \1LastAllocated:: ds \4
 
@@ -53,16 +48,14 @@ endc
 
 ENDM
 
-wram_conversion_table: MACRO
+MACRO wram_conversion_table
 	; uses constants to invoke the macro above
 	; in: WRAM prefix, constant prefix
-if \2_MINIMUM_RESERVED_INDEX > $FF
-	fail "16-bit conversion table error: $FF must be declared as a reserved index"
-endc
+	assert \2_MINIMUM_RESERVED_INDEX <= $FF, \
+		"16-bit conversion table error: $FF must be declared as a reserved index"
 
-if \2_ENTRIES >= \2_MINIMUM_RESERVED_INDEX
-	fail "16-bit conversion table error: table entries and reserved indexes overlap"
-endc
+	assert \2_ENTRIES < \2_MINIMUM_RESERVED_INDEX, \
+		"16-bit conversion table error: table entries and reserved indexes overlap"
 
 	___wram_conversion_table \1, \
 	                         \2_ENTRIES, \

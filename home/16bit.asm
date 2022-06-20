@@ -1,4 +1,4 @@
-___conversion_table_homecall: MACRO
+MACRO ___conversion_table_homecall
 	; macro arguments: homecall type, function label
 	; all functions clobber af and hl (except for outputs) and preserve bc and de
 	; homecall types:
@@ -31,7 +31,7 @@ ___conversion_table_homecall: MACRO
 	ret
 ENDM
 
-___conversion_table_homecall_readlocked: MACRO
+MACRO ___conversion_table_homecall_readlocked
 	; macro argument: table name
 	; in: a = position
 	; out: a = 8-bit index; everything else preserved

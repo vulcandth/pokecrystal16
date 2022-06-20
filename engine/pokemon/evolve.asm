@@ -660,7 +660,7 @@ DetermineEvolutionItemResults::
 	cp EVOLVE_ITEM
 	jr nz, .skip_species_parameter
 	call GetNextEvoAttackByte
-	ld b, a	
+	ld b, a
 	ld a, [wCurItem]
 	cp b
 	jr nz, .skip_species

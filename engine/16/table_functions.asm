@@ -71,8 +71,7 @@ MoveTableGarbageCollection:
 	push af
 	ld a, 1
 	ldh [rSVBK], a
-___move = 0
-	rept NUM_MOVES
+	FOR ___move, NUM_MOVES
 		___conversion_bitmap_check_structs wPartyMon1Moves + ___move, PARTYMON_STRUCT_LENGTH, PARTY_LENGTH, .set_bit
 		___conversion_bitmap_check_structs wBreedMon1Moves + ___move, wBreedMon2 - wBreedMon1, 2, .set_bit
 		ld a, [wEggMonMoves + ___move]
@@ -82,7 +81,6 @@ ___move = 0
 		___conversion_bitmap_check_values .set_bit, wBufferMonMoves + ___move, wTempMonMoves + ___move, wContestMonMoves + ___move, \
 		                                            wBattleMonMoves + ___move, wEnemyMonMoves + ___move, wWildMonMoves + ___move, \
 		                                            wPlayerUsedMoves + ___move
-___move = ___move + 1
 	endr
 	ld a, [wNamedObjectType] ;or any of its aliases...
 	call .set_bit
@@ -97,10 +95,8 @@ ___move = ___move + 1
 	push af
 	ld a, BANK(sBox)
 	call OpenSRAM
-___move = 0
-	rept NUM_MOVES
+	FOR ___move, NUM_MOVES
 		___conversion_bitmap_check_structs sBoxMon1Moves + ___move, BOXMON_STRUCT_LENGTH, MONS_PER_BOX, .set_bit
-___move = ___move + 1
 	endr
 	pop af
 	call OpenSRAM

@@ -1,7 +1,7 @@
 ; Some functions are defined as macros so they can be reused for multiple 16-bit tables
 ; (they are not parameterized due to performance constraints; loads and non-evicting stores should be as fast as possible)
 
-___conversion_table_load: MACRO
+MACRO ___conversion_table_load
 	; macro arguments: WRAM prefix, constant prefix
 	; in: a: 8-bit index
 	; out: hl: 16-bit index; a: clobbered
@@ -39,7 +39,7 @@ ___conversion_table_load: MACRO
 	ret
 ENDM
 
-___conversion_table_store: MACRO
+MACRO ___conversion_table_store
 	; macro arguments: WRAM prefix, constant prefix
 	; in: hl: 16-bit index
 	; out: a: 8-bit index; hl: clobbered
@@ -99,13 +99,13 @@ ___conversion_table_store: MACRO
 		ld a, [hl]
 		cp d
 		jp z, .done
-.cache_miss
+	.cache_miss
 	endc
 
 	; it's not in the cache (perhaps because we don't even have one), so look for the index in the table
 	ld hl, \1Entries
 	ld b, h ;not $FF = don't add to the recent indexes list
-___unroll = 8
+	DEF ___unroll = 8
 	if \2_ENTRIES % ___unroll
 		; Duff's device, gbz80 edition
 		; note that the block inside the rept is 8 bytes long
@@ -116,9 +116,10 @@ ___unroll = 8
 		ld a, [hli]
 		cp e
 		ld a, [hli]
-		db $20, 3 ;jr nz, <skip 3 bytes> - avoid labels to avoid running into bugs with \@
+		jr nz, :+
 		cp d
 		jr z, .found
+	:
 	endr
 	ld a, l
 	cp LOW(\1EntriesEnd)
@@ -190,7 +191,7 @@ ___unroll = 8
 		cp \2_SAVED_RECENT_INDEXES
 		jr c, .no_recent_overflow
 		xor a
-.no_recent_overflow
+	.no_recent_overflow
 	else
 		; ...but if it is a power of 2, it's simpler to just use an and
 		and \2_SAVED_RECENT_INDEXES - 1
@@ -270,12 +271,12 @@ ___unroll = 8
 	; all other registers are free/clobbers; this code will be called as a function when needed
 ENDM
 
-___conversion_bitmap_initialize: MACRO
+MACRO ___conversion_bitmap_initialize
 	; macro arguments: WRAM prefix, constant prefix, bit setting function (must preserve de; may be a local label)
 	; falls through; clobbers all registers (make sure to push de before invoking!)
 	xor a
 	ld hl, wConversionTableBitmap
-___unroll = 4
+	DEF ___unroll = 4
 	ld c, (\2_ENTRIES + 8 * ___unroll - 1) / (8 * ___unroll)
 .initialization_clear_loop
 	rept ___unroll
@@ -295,16 +296,14 @@ ___unroll = 4
 	jr nz, .initialization_locked_loop
 ENDM
 
-___conversion_bitmap_check_structs: MACRO
+MACRO ___conversion_bitmap_check_structs
 	; macro arguments: struct pointer, struct length, struct count, bit setting function
 	; may clobber anything; falls through
-___unroll = 8
+	DEF ___unroll = 8
 	if (\3) <= ___unroll
-___iteration = 0
-		rept \3
+		FOR ___iteration, \3
 			ld a, [(\1) + ___iteration * (\2)]
 			call \4
-___iteration = ___iteration + 1
 		endr
 	else
 		ld de, \1
@@ -314,7 +313,7 @@ ___iteration = ___iteration + 1
 			; again, Duff's device - the body of the rept is 10 bytes long
 			db $18, 10 * (___unroll - ((\3) % ___unroll))
 		endc
-.check_loop\@
+	.check_loop\@
 		rept ___unroll
 			ld a, [de]
 			ld hl, \2
@@ -329,20 +328,15 @@ ___iteration = ___iteration + 1
 	endc
 ENDM
 
-___conversion_bitmap_check_values: MACRO
+MACRO ___conversion_bitmap_check_values
 	; macro arguments: bit setting function, address, address, address...
-___target EQUS "\1"
-___unroll = _NARG - 1
-	shift
-	rept ___unroll
-		ld a, [\1]
-		call ___target
-		shift
+	for ___unroll, 2, _NARG + 1
+		ld a, [\<___unroll>]
+		call \1
 	endr
-	PURGE ___target
 ENDM
 
-___conversion_bitmap_free_unused: MACRO
+MACRO ___conversion_bitmap_free_unused
 	; macro arguments: WRAM prefix, constant prefix
 	ld bc, \2_ENTRIES >> 3
 	ld de, wConversionTableBitmap
@@ -353,24 +347,24 @@ ___conversion_bitmap_free_unused: MACRO
 	push de
 	ld e, a
 	; no ___unroll here since we rely on there being 8 bits per byte
-___iteration = 0
-	rept 8
+	FOR ___iteration, 8
 		srl e
 		ld a, [hli]
-		db $30, 3 ;jr nc, <skip 3 bytes> - avoid labels to avoid running into bugs with \@
+		jr nc, :+
 		or [hl]
-		db $20, 4 ;jr nz, <skip 4 bytes>
+		jr nz, :++
+	:
 		xor a
 		ld [hld], a
 		ld [hl], a
 		dec b
+	:
 		set 0, l ;so hl points to the second byte of the entry regardless of whether it was cleared
 		if (\2_ENTRIES >= $80) && (___iteration == 6)
 			inc hl ;the only iteration with any chance of carry is this one
 		else
 			inc l
 		endc
-___iteration = ___iteration + 1
 	endr
 	pop de
 	ld a, [de]
@@ -380,8 +374,7 @@ ___iteration = ___iteration + 1
 	if \2_ENTRIES & 7
 		; handle the few remaining entries that couldn't be handled by the loop
 		ld e, a
-___iteration = 0
-		rept \2_ENTRIES & 7
+		FOR ___iteration, \2_ENTRIES & 7
 			; same loop as above
 			srl e
 			ld a, [hli]
@@ -392,7 +385,6 @@ ___iteration = 0
 			ld [hld], a
 			ld [hl], a
 			dec b
-___iteration = ___iteration + 1
 			if ___iteration < (\2_ENTRIES & 7)
 				; no point incrementing the pointer if it is the last iteration
 				set 0, l
@@ -406,7 +398,7 @@ ___iteration = ___iteration + 1
 	ld [\1UsedSlots], a
 ENDM
 
-___conversion_bitmap_set: MACRO
+MACRO ___conversion_bitmap_set
 	; macro argument: constant prefix
 	; in: a: index - sets the corresponding bit in wConversionTableBitmap if the index is in range
 	dec a
@@ -443,7 +435,7 @@ ___conversion_bitmap_set: MACRO
 	ret
 ENDM
 
-___conversion_table_lock_ID: MACRO
+MACRO ___conversion_table_lock_ID
 	; macro arguments: WRAM prefix, constant prefix
 	; in: h = 8-bit index or zero (to clear), l = position
 	; out: a = original h, hl = clobbered, carry = set if error

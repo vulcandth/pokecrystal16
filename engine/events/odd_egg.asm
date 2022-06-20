@@ -48,7 +48,7 @@ _GiveOddEgg:
 	ld de, wOddEgg
 	ld bc, NICKNAMED_MON_STRUCT_LENGTH + NAME_LENGTH
 	call CopyBytes
-	
+
 	; Loads the actual species and overwrites the zero in wOddEggSpecies
 	pop hl
 	add hl, hl

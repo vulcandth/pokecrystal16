@@ -13,14 +13,14 @@
 ;                          as $FF), often handled as negative indexes, retain their special meanings without requiring
 ;                          an allocation
 
-MON_TABLE_ENTRIES                EQU 100
-MON_TABLE_LOCKED_ENTRIES         EQU  30
-MON_TABLE_CACHE_SIZE             EQU  16
-MON_TABLE_SAVED_RECENT_INDEXES   EQU   8
-MON_TABLE_MINIMUM_RESERVED_INDEX EQU $FD ; ensures that the value for the egg will remain reserved
+DEF MON_TABLE_ENTRIES                EQU 100
+DEF MON_TABLE_LOCKED_ENTRIES         EQU  30
+DEF MON_TABLE_CACHE_SIZE             EQU  16
+DEF MON_TABLE_SAVED_RECENT_INDEXES   EQU   8
+DEF MON_TABLE_MINIMUM_RESERVED_INDEX EQU $FD ; ensures that the value for the egg will remain reserved
 
-MOVE_TABLE_ENTRIES                EQU 230
-MOVE_TABLE_LOCKED_ENTRIES         EQU  18
-MOVE_TABLE_CACHE_SIZE             EQU  16
-MOVE_TABLE_SAVED_RECENT_INDEXES   EQU  16
-MOVE_TABLE_MINIMUM_RESERVED_INDEX EQU $FF
+DEF MOVE_TABLE_ENTRIES                EQU 230
+DEF MOVE_TABLE_LOCKED_ENTRIES         EQU  18
+DEF MOVE_TABLE_CACHE_SIZE             EQU  16
+DEF MOVE_TABLE_SAVED_RECENT_INDEXES   EQU  16
+DEF MOVE_TABLE_MINIMUM_RESERVED_INDEX EQU $FF
