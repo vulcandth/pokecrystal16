@@ -280,6 +280,15 @@ CheckObjectTime::
 	ret c
 	ld a, [hl]
 	cp d
+	jr nc, .yes
+	jr .no
+
+.yes
+	and a
+	ret
+
+.no
+	scf
 	ret
 
 UnmaskCopyMapObjectStruct::
@@ -517,16 +526,6 @@ _GetMovementIndex::
 	rst Bankswitch
 
 	ld a, h
-	ret
-
-SetVramState_SpriteUpdatesDisabled:: ; unreferenced
-	ld hl, wStateFlags
-	set SPRITE_UPDATES_DISABLED_F, [hl]
-	ret
-
-ResetVramState_SpriteUpdatesDisabled:: ; unreferenced
-	ld hl, wStateFlags
-	res SPRITE_UPDATES_DISABLED_F, [hl]
 	ret
 
 UpdateSprites::

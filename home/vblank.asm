@@ -44,7 +44,7 @@ VBlankHandlers:
 	dw VBlank_Serial
 	dw VBlank_Credits
 	dw VBlank_DMATransfer
-	dw VBlank_Normal ; unused
+	dw VBlank7
 	assert_table_length NUM_VBLANK_HANDLERS
 
 VBlank_Normal::
@@ -420,4 +420,15 @@ VBlank_DMATransfer::
 
 	ldh a, [hROMBankBackup]
 	rst Bankswitch
+	ret
+
+VBlank7:
+	; special vblank routine
+	; copies tilemap in one frame without any tearing
+	; also updates oam, and pals if specified
+	push af
+	homecall VBlankSafeCopyTilemapAtOnce
+	xor a
+	ld [wVBlankOccurred], a
+	pop af
 	ret
