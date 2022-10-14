@@ -118,17 +118,3 @@ GetFarWRAMByte::
 	ldh [rWBK], a
 	ldh a, [hFarByte]
 	ret
-
-GetFarWRAMWord:: ; unreferenced
-; retrieve a word from a:hl, and return it in hl.
-	ldh [hTempBank], a
-	ldh a, [rWBK]
-	push af
-	ldh a, [hTempBank]
-	ldh [rWBK], a
-	ld a, [hli]
-	ld h, [hl]
-	ld l, a
-	pop af
-	ldh [rWBK], a
-	ret

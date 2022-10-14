@@ -88,6 +88,22 @@ NamingScreenJumptable:
 .Pokemon:
 	ld a, [wCurPartySpecies]
 	ld [wTempIconSpecies], a
+
+	; Is it a PartyMon or a BoxMon?
+	ld a, [wMonType]
+	and a
+	ld hl, wBufferMonDVs
+	jr nz, .start
+	ld a, MON_DVS
+	call GetPartyParamLocation
+.start
+	ld de, wTempMonDVs
+	ld a, [hli]
+	ld [de], a
+	inc de
+	ld a, [hl]
+	ld [de], a
+
 	ld hl, LoadMenuMonIcon
 	ld a, BANK(LoadMenuMonIcon)
 	ld e, MONICON_NAMINGSCREEN
@@ -235,7 +251,8 @@ NamingScreenJumptable:
 	jr .StoreParams
 
 .StoreBoxIconParams:
-	ld a, BOX_NAME_LENGTH - 1
+	; the terminator isn't saved, so no "- 1" is needed.
+	ld a, BOX_NAME_LENGTH
 	hlcoord 5, 4
 	jr .StoreParams
 

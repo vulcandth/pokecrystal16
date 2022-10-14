@@ -583,7 +583,7 @@ Edit [engine/items/item_effects.asm](https://github.com/pret/pokecrystal/blob/ma
 +	ld a, d
  	call GetFarByte
  	inc hl
- 	cp "@"
+ 	cp '@'
  	jr nz, .SkipText
 
 -	call HeavyBall_GetDexEntryBank

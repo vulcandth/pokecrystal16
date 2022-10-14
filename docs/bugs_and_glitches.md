@@ -2105,7 +2105,7 @@ Finally, edit [engine/battle/read_trainer_party.asm](https://github.com/pret/pok
 +
 +.skip_name
 +	ld a, [hli]
-+	cp "@"
++	cp '@'
 +	jr nz, .skip_name
 +
 +	inc hl
@@ -2551,7 +2551,7 @@ This bug can allow you to talk to Eusine in Celadon City and encounter Ho-Oh wit
  	ld a, [de]
  	cp [hl]
  	jr nz, .notfound
- 	cp "@"
+ 	cp '@'
  	jr z, .found ; reached end of string
  	inc hl
  	inc de
