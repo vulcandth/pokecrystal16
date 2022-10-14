@@ -19,6 +19,16 @@ DEF HP_GREEN  EQU 0
 DEF HP_YELLOW EQU 1
 DEF HP_RED    EQU 2
 
+; VWF flags (see engine/gfx/vwf.asm)
+	const_def
+	const VWF_SINGLE_F
+	const VWF_INVERT_F
+	const VWF_OPAQUE_F
+
+DEF VWF_SINGLE EQU 1 << VWF_SINGLE_F
+DEF VWF_INVERT EQU 1 << VWF_INVERT_F
+DEF VWF_OPAQUE EQU 1 << VWF_OPAQUE_F
+
 DEF SPRITE_GFX_LIST_CAPACITY EQU 32 ; see wUsedSprites
 
 ; PokeAnims indexes (see engine/gfx/pic_animation.asm)
