@@ -3,8 +3,8 @@ rsreset
 DEF MOMITEM_TRIGGER rb 3 ; 0
 DEF MOMITEM_COST    rb 3 ; 3
 DEF MOMITEM_KIND    rb   ; 6
-DEF MOMITEM_ITEM    rb   ; 7
-DEF MOMITEM_SIZE EQU _RS ; 8
+DEF MOMITEM_ITEM    rw   ; 7
+DEF MOMITEM_SIZE EQU _RS ; 9
 
 ; momitem kind values
 	const_def 1
@@ -151,7 +151,12 @@ Mom_GiveItemOrDoll:
 	ret
 
 .not_doll
-	ld a, [hl]
+	push hl
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+	call GetItemIDFromIndex
+	pop hl
 	ld [wCurItem], a
 	ld a, 1
 	ld [wItemQuantityChange], a
@@ -190,7 +195,7 @@ GetItemFromMom:
 	jr z, .zero
 	dec a
 	ld de, MomItems_1
-	jr .GetFromList1
+	jr .GetFromList
 
 .zero
 	ld a, [wWhichMomItem]
@@ -201,13 +206,19 @@ GetItemFromMom:
 .ok
 	ld de, MomItems_2
 
-.GetFromList1:
+.GetFromList:
 	ld l, a
 	ld h, 0
-	assert MOMITEM_SIZE == 8
-rept 3 ; multiply hl by MOMITEM_SIZE
+	push de
+	ld d, h
+	ld e, l
+	assert MOMITEM_SIZE == 9
+; multiply hl by 9
 	add hl, hl
-endr
+	add hl, hl
+	add hl, hl
+	add hl, de
+	pop de
 	add hl, de
 	ret
 
