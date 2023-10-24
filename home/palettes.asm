@@ -153,10 +153,7 @@ DmgToCgbObjPals::
 	pop af
 	ldh [rWBK], a
 
-	pop bc
-	pop de
-	pop hl
-	ret
+	jp PopBCDEHL
 
 DmgToCgbObjPal0::
 	ldh [rOBP0], a
