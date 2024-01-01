@@ -9,7 +9,7 @@ MACRO npctrade
 	dw \7
 	dname \8, PLAYER_NAME_LENGTH
 	db \9
-	db 0, 0
+	db 0
 ENDM
 
 NPCTrades:
