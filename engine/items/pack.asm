@@ -1074,6 +1074,8 @@ DepositSellTutorial_InterpretJoypad:
 	ret
 
 TutorialPack:
+	ld hl, wItemFlags
+	set IN_BAG_F, [hl]
 	call DepositSellInitPackBuffers
 	ld a, [wInputType]
 	or a
@@ -1085,6 +1087,8 @@ TutorialPack:
 	jr c, .loop
 	xor a ; FALSE
 	ld [wPackUsedItem], a
+	ld hl, wItemFlags
+	res IN_BAG_F, [hl]
 	ret
 
 .RunJumptable:

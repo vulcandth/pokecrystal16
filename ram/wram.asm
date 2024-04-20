@@ -2784,13 +2784,13 @@ wOTPartyDataEnd::
 NEXTU
 ; catch tutorial dude pack
 wDudeNumItems:: db
-wDudeItems:: ds 2 * 4 + 1
+wDudeItems:: ds 2 * 3 + 1
 
 wDudeNumKeyItems:: db
 wDudeKeyItems:: ds 18 + 1
 
 wDudeNumBalls:: db
-wDudeBalls:: ds 2 * 4 + 1
+wDudeBalls:: ds 2 * 3 + 1
 ENDU
 
 	ds 4
