@@ -2376,8 +2376,10 @@ RestorePPEffect:
 
 	ld hl, RaiseThePPOfWhichMoveText
 	ld a, [wTempRestorePPItem]
+	push hl
 	call GetItemIndexFromID
 	cphl16 PP_UP
+	pop hl
 	jr z, .ppup
 	ld hl, RestoreThePPOfWhichMoveText
 
@@ -2408,8 +2410,10 @@ RestorePPEffect:
 	pop hl
 
 	ld a, [wTempRestorePPItem]
+	push hl
 	call GetItemIndexFromID
 	cphl16 PP_UP
+	pop hl
 	jp nz, Not_PP_Up
 
 	ld a, [hl]
@@ -2570,14 +2574,24 @@ RestorePP:
 	jr nc, .dont_restore
 
 	ld a, [wTempRestorePPItem]
+	push hl
 	call GetItemIndexFromID
 	cphl16 MAX_ELIXER
+	pop hl
 	jr z, .restore_all
+	ld a, [wTempRestorePPItem]
+	push hl
+	call GetItemIndexFromID
 	cphl16 MAX_ETHER
+	pop hl
 	jr z, .restore_all
 
 	ld c, 5
+	ld a, [wTempRestorePPItem]
+	push hl
+	call GetItemIndexFromID
 	cphl16 MYSTERYBERRY
+	pop hl
 	jr z, .restore_some
 
 	ld c, 10
