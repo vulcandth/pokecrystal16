@@ -1604,7 +1604,7 @@ RevivePokemon:
 	ld [wLowHealthAlarm], a
 	ld a, [wCurItem]
 	push hl
-	call GetItemIDFromIndex
+	call GetItemIndexFromID
 	cphl16 REVIVE
 	pop hl
 	jr z, .revive_half_hp
