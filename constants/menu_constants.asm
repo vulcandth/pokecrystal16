@@ -33,8 +33,9 @@
 
 ; ScrollingMenu items structure format
 	const_def 1
-	const SCROLLINGMENU_ITEMS_NORMAL   ; 1
-	const SCROLLINGMENU_ITEMS_QUANTITY ; 2
+	const SCROLLINGMENU_ITEMS_NORMAL         ; 1
+	const SCROLLINGMENU_ITEMS_QUANTITY       ; 2
+	const SCROLLINGMENU_ITEMS_16BIT_QUANTITY ; 3
 
 ; _2DMenu more flags
 	const_def
