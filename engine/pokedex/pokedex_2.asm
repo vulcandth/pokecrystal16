@@ -184,12 +184,11 @@ DisplayDexEntry:
 	ld a, $55
 	call ByteFill
 
-; CHECK
 	ld a, [wTempSpecies]
 	ld b, a
 	call GetDexEntryPointer ; returns b:de, bank and dex entry ptr
 	ld a, b
-	push af
+	push af ; bank
 	; de is already loaded
 	hlcoord 9, 6
 	call PlaceFarString ; dex species nickname
@@ -365,9 +364,6 @@ DisplayDexMonType_CustomGFX:
 	call AddNTimes ; increments the TypeDarkIconGFX pointer to the right address of the needed Type Tiles
 	ld d, h
 	ld e, l
-	ld hl, vTiles2 tile $74 ; destination address of the Tile, in this case Tiles $74-$77
-	lb bc, BANK(TypeDarkIconGFX), 4 ; Bank in 'b', Number of Tiles being loaded in 'c'
-	call Request2bpp
 
 	ld a, $1
 	ldh [rVBK], a

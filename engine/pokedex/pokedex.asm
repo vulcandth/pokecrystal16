@@ -678,6 +678,7 @@ DexEntryScreen_ArrowCursorData:
 	dwcoord 17, 17 ; PICS
 
 DexEntryScreen_MenuActionJumptable:
+	dw Pokedex_Page
 	dw BaseStat_Page
 	dw Moves_Page
 	dw Area_Page
@@ -1939,9 +1940,19 @@ Pokedex_DrawDexEntryScreenBG:
 	ld [hli], a
 	ld a, $e8 ; .
 	ld [hli], a
-	ld de, wTempSpecies
-	lb bc, PRINTNUM_LEADINGZEROS | 1, 3
+	push hl ; hlcoord
+	ld a, [wTempSpecies]
+	call GetPokemonIndexFromID
+	ld b, l
+	ld c, h
+	ld hl, sp + 0
+	ld d, h
+	ld e, l
+	pop hl ; hlcoord
+	push bc ; mon index
+	lb bc, PRINTNUM_LEADINGZEROS | 2, 3
 	call PrintNum
+	pop bc ; mon index
 ; up/down arrow indicators
 	hlcoord 19, 0
 	ld [hl], $3f
@@ -3713,9 +3724,18 @@ Pokedex_LoadInversedFont:
 	ld de, FontInversed
 	ld a, BANK(FontInversed)
 	call Get1bpp
-
+	ld hl, vTiles0 tile $bb
+	lb bc, BANK(Pokedex_MathTiles), 5 ; 5 tiles
+	ld de, Pokedex_MathTiles
+	ld a, BANK(Pokedex_MathTiles)
+	call Get1bpp
+	ld hl, vTiles0 tile $cc
+	lb bc, BANK(Pokedex_Imperial_Tiles), 4 ; 4 tiles
+	ld de, Pokedex_Imperial_Tiles
+	ld a, BANK(Pokedex_Imperial_Tiles)
+	call Get1bpp
 	ld a, $0
-	ldh [rVBK], a
+	ldh [rVBK], a	
 	ret
 
 Pokedex_LoadInvertedFont:
@@ -3732,6 +3752,17 @@ Pokedex_InvertTiles:
 	ld a, b
 	or c
 	jr nz, .loop
+
+	ld hl, vTiles0 tile $bb
+	lb bc, BANK(Pokedex_MathTiles), 5 ; 5 tiles
+	ld de, Pokedex_MathTiles
+	ld a, BANK(Pokedex_MathTiles)
+	call Get1bpp
+	ld hl, vTiles0 tile $cc
+	lb bc, BANK(Pokedex_Imperial_Tiles), 4 ; 2 tiles
+	ld de, Pokedex_Imperial_Tiles
+	ld a, BANK(Pokedex_Imperial_Tiles)
+	call Get1bpp
 	ret
 
 Pokedex_CheckSGB:

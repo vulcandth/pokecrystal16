@@ -159,17 +159,15 @@ INCLUDE "data/battle/effect_command_pointers.asm"
 
 
 SECTION "bank10", ROMX
-; INCLUDE "engine/pokedex/pokedex.asm"
 INCLUDE "data/moves/moves.asm"
 INCLUDE "engine/pokemon/evolve.asm"
 
 
 SECTION "bank11", ROMX
 
-; INCLUDE "engine/events/fruit_trees.asm"
-; INCLUDE "engine/battle/ai/move.asm"
-INCLUDE "engine/pokedex/pokedex_2.asm"
-; INCLUDE "engine/pokemon/mail.asm"
+INCLUDE "engine/events/fruit_trees.asm"
+INCLUDE "engine/battle/ai/move.asm"
+INCLUDE "engine/pokemon/mail.asm"
 
 
 SECTION "Crystal Features 1", ROMX
@@ -687,6 +685,7 @@ SECTION "VWF", ROMX
 
 INCLUDE "engine/gfx/vwf.asm"
 
+; Nayru's Pokedex GFX
 SECTION "DEX GFX 2", ROMX
 PokedexLZ:
 INCBIN "gfx/pokedex/pokedex.2bpp.lz"
@@ -696,11 +695,16 @@ Pokedex_ExtraTiles:
 INCBIN "gfx/pokedex/rangi_dex_tiles.2bpp"
 Pokedex_PageNumTiles:
 INCBIN "gfx/pokedex/dex_pagenums.2bpp"
+Pokedex_MathTiles:
+INCBIN "gfx/pokedex/math_symbols_inverted.1bpp"
+Pokedex_Imperial_Tiles:
+INCBIN "gfx/pokedex/POKE_imperial_symbols_inverted.1bpp"
 
 SECTION "Nayru Pokedex", ROMX
 INCLUDE "engine/pokedex/pokedex.asm"
 
 SECTION "Nayru Pokedex 2", ROMX
+INCLUDE "engine/pokedex/pokedex_2.asm"
 INCLUDE "engine/pokedex/pokedex_evolution_page.asm"
 INCLUDE "engine/pokedex/pokedex_stats_page.asm"
 INCLUDE "engine/pokedex/pokedex_pics_page.asm"
@@ -714,9 +718,9 @@ SECTION "Bank3E Overflow", ROMX
 INCLUDE "engine/link/time_capsule.asm"
 INCLUDE "engine/link/time_capsule_2.asm"
 INCLUDE "engine/events/magikarp.asm"
-INCLUDE "engine/pokemon/mail.asm"
-INCLUDE "engine/events/fruit_trees.asm"
-INCLUDE "engine/battle/ai/move.asm"
+; INCLUDE "engine/pokemon/mail.asm"
+; INCLUDE "engine/events/fruit_trees.asm"
+; INCLUDE "engine/battle/ai/move.asm"
 
 SECTION "Custom GFX", ROMX
 INCLUDE "gfx/rangi_gfx.asm"
