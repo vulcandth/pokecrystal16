@@ -270,12 +270,43 @@ _CGB_Pokedex:
 .is_pokemon
 	call GetMonPalettePointer
 	call LoadPalette_White_Col1_Col2_Black ; mon palette
+; black background for Pal 7
+	ld de, wBGPals1 palette 7 ; First color slot of Pal 7	
+	call LoadSingleBlackPal ; loads black into slot 1 of pal 7, since it is normally white
+							; but pokedex has black background
+; mon type 1	
+	ld a, [wTempSpecies]
+	ld [wCurSpecies], a	
+	call GetBaseData
+	ld a, [wBaseType1]
+	ld c, a ; farcall will clobber a for the bank
+	farcall GetMonTypeIndex
+; load the 1st type pal 
+	; type index is already in c
+	ld de, wBGPals1 palette 7 + 2 ; slot 2 of pal 7
+	farcall LoadMonBaseTypePal	; loads type color into slot 2 of pal 7
+; mon type 2
+	ld a, [wBaseType2]
+	ld c, a ; farcall will clobber a for the bank
+	farcall GetMonTypeIndex
+; load the 2nd type pal 
+	; type index is already in c
+	ld de, wBGPals1 palette 7 + 4 ; slot 3 of pal 7
+	farcall LoadMonBaseTypePal ; loads type color into slot 3 of pal 7
 .got_palette
 	call WipeAttrmap
 	hlcoord 1, 1, wAttrmap
 	lb bc, 7, 7
 	ld a, $1 ; green question mark palette
 	call FillBoxCGB
+
+	; Both mon types
+	; if no 2nd Type, those 4 Squares will appear normally as blank Black Tiles
+	hlcoord 9, 1, wAttrmap
+	lb bc, 1, 8 ; box 1 tile in HEIGHT, 8 tiles in WIDTH
+	ld a, $7 ; mon base type pals
+	call FillBoxCGB
+
 	call InitPartyMenuOBPals
 	ld hl, PokedexCursorPalette
 	ld de, wOBPals1 palette 7 ; green cursor palette
