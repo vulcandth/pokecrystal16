@@ -705,11 +705,6 @@ INCLUDE "engine/pokedex/pokedex.asm"
 
 SECTION "Nayru Pokedex 2", ROMX
 INCLUDE "engine/pokedex/pokedex_2.asm"
-INCLUDE "engine/pokedex/pokedex_evolution_page.asm"
-INCLUDE "engine/pokedex/pokedex_stats_page.asm"
-INCLUDE "engine/pokedex/pokedex_pics_page.asm"
-INCLUDE "engine/pokedex/pokedex_moves_page.asm"
-INCLUDE "engine/pokedex/pokedex_area_page.asm"
 
 SECTION "Map GroupNums Names", ROMX
 INCLUDE "data/maps/map_names.asm"
@@ -718,9 +713,6 @@ SECTION "Bank3E Overflow", ROMX
 INCLUDE "engine/link/time_capsule.asm"
 INCLUDE "engine/link/time_capsule_2.asm"
 INCLUDE "engine/events/magikarp.asm"
-; INCLUDE "engine/pokemon/mail.asm"
-; INCLUDE "engine/events/fruit_trees.asm"
-; INCLUDE "engine/battle/ai/move.asm"
 
 SECTION "Custom GFX", ROMX
 INCLUDE "gfx/rangi_gfx.asm"
