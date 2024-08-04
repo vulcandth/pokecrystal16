@@ -1,4 +1,4 @@
-ContestMons:
+ContestMons::
 	;      %, species,   min, max
 	dbwbb 20, CATERPIE,    7, 18
 	dbwbb 20, WEEDLE,      7, 18

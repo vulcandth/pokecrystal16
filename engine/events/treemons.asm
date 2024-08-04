@@ -35,7 +35,7 @@ RockMonEncounter:
 	call GetTreeMonSet
 	jr nc, .no_battle
 
-	call GetTreeMons
+	call GetRockMons
 	jr nc, .no_battle
 
 	; 40% chance of an encounter
@@ -166,6 +166,30 @@ GetTreeMon:
 	inc a
 	jr nz, .loop
 	; fallthrough
+
+GetRockMons:
+; Return the address of TreeMon table a in hl.
+; Return nc if table a doesn't exist.
+	
+	cp NUM_ROCKSMASH_SETS
+	jr nc, .quit
+
+	ld e, a
+	ld d, 0
+	ld hl, RockSmashMons
+	add hl, de
+	add hl, de
+
+	ld a, [hli]
+	ld h, [hl]
+	ld l, a
+
+	scf
+	ret
+
+.quit
+	xor a
+	ret
 
 SelectTreeMon:
 ; Read a TreeMons table and pick one monster at random.

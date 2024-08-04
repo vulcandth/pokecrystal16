@@ -310,17 +310,11 @@ InitPokegearTilemap:
 .Clock:
 	ld de, ClockTilemapRLE
 	call Pokegear_LoadTilemapRLE
-	hlcoord 12, 1
-	ld de, .switch
-	call PlaceString
 	hlcoord 0, 12
 	lb bc, 4, 18
 	call Textbox
 	call Pokegear_UpdateClock
 	ret
-
-.switch
-	db " SWITCH▶@"
 
 .Map:
 	ld a, [wPokegearMapPlayerIconLandmark]
@@ -466,6 +460,9 @@ PokegearClock_Joypad:
 	and A_BUTTON | B_BUTTON | START | SELECT
 	jr nz, .quit
 	ld a, [hl]
+	and D_LEFT
+	jr nz, .left
+	ld a, [hl]	
 	and D_RIGHT
 	ret z
 	ld a, [wPokegearFlags]
@@ -482,7 +479,16 @@ PokegearClock_Joypad:
 	ld c, POKEGEARSTATE_PHONEINIT
 	ld b, POKEGEARCARD_PHONE
 	jr .done
-
+.left
+	; if have radio card, load that, else, load phone
+	ld a, [wPokegearFlags]
+	bit POKEGEAR_RADIO_CARD_F, a
+	jr nz, .radio_card
+	jr .no_map_card
+.radio_card
+	ld c, POKEGEARSTATE_RADIOINIT
+	ld b, POKEGEARCARD_RADIO
+	jr .done
 .no_phone_card
 	ld a, [wPokegearFlags]
 	bit POKEGEAR_RADIO_CARD_F, a
@@ -507,22 +513,121 @@ PokegearClock_Joypad:
 	ret
 
 Pokegear_UpdateClock:
-	hlcoord 3, 5
-	lb bc, 5, 14
+	; makes the grey colored box
+	hlcoord 1, 5
+	lb bc, 6, 18
 	call ClearBox
 	ldh a, [hHours]
 	ld b, a
 	ldh a, [hMinutes]
 	ld c, a
-	decoord 6, 8
+	decoord 11, 1
 	farcall PrintHoursMins
 	ld hl, .GearTodayText
-	bccoord 6, 6
+	bccoord 2, 6
 	call PrintTextboxTextAt
-	ret
+	; draw border
+	; ; Fix center Box since i cant find the func that originally drew this one
+	hlcoord 0, 4
+	ld [hl], $06 ; left upper corner
+	hlcoord 19, 4
+	ld [hl], $17 ; right upper corner
+	hlcoord 0, 11
+	ld [hl], $26 ; left lower corner
+	hlcoord 19, 11
+	ld [hl], $27 ; right lower corner
+	; draw horizontal bars
+	hlcoord 1, 4
+	ld a, $07
+	ld bc, 18
+	call ByteFill
+	hlcoord 1, 11
+	ld a, $07
+	ld bc, 18
+	call ByteFill
+	
+	hlcoord 0, 5
+	lb bc, 6, 1
+	ld a, $16
+	call FillBoxWithByte
+	
+	hlcoord 19, 5
+	lb bc, 6, 1
+	ld a, $16
+	call FillBoxWithByte
+	
+	; Map Location Name
+	; d ; map num
+	; e ; map group
+	ld a, [wMapGroup]
+	ld e, a
+	ld a, [wMapNumber]
+	ld d, a
+	farcall GetMapGroupNum_Name
+	; return string ptr in de
+	ld a, BANK(MapGroupNum_Names)
+	hlcoord 2, 8
+	call PlaceFarString
+	; Fishing group
+	; d ; map num
+	; e ; map group
+	ld a, [wMapGroup]
+	ld e, a
+	ld a, [wMapNumber]
+	ld d, a
+	; given map info in 'de'
+	; return: string ptr in 'de'
+	; if 'de' is zero, no fishing group on map
+	farcall GetMapsFishGroup
+	ld a, d
+	and a
+	jr nz, .print_fish_group
+	ld a, e
+	and a
+	jr z, .print_tod
+.print_fish_group
+	ld a, BANK(FishGroups_Names)
+	hlcoord 8, 10
+	call PlaceFarString
+	hlcoord 3, 10
+	ld de, .FishGrpStr
+	call PlaceString
+.print_tod
+	ld a, [wTimeOfDay]
+	and a
+	jr z, .Morn
+	cp 1
+	jr z, .Day
+	ld de, .NiteStr
+.got_tod		
+	hlcoord 14, 6
+	call PlaceString
 
-	db "ごぜん@"
-	db "ごご@"
+	hlcoord 11, 0
+	ld [hl], $30 ; round edge
+	inc hl
+	ld [hl], $7f
+	hlcoord 11, 2
+	ld [hl], $32
+	inc hl
+	ld [hl], $7f
+	ret
+.Morn
+	ld de, .MornStr
+	jr .got_tod
+.Day
+	ld de, .DayStr
+	jr .got_tod
+
+.MornStr:
+	db "MORN@"
+.DayStr:
+	db "DAY@"
+.NiteStr:
+	db "NITE@"
+	; db "NIGHT@"
+.FishGrpStr:
+	db "FISH:@"	
 
 .GearTodayText:
 	text_far _GearTodayText
@@ -758,6 +863,10 @@ PokegearRadio_Joypad:
 	ld a, [hl]
 	and D_LEFT
 	jr nz, .left
+	ld a, [hl]
+	and D_RIGHT ; act like you have no phone and no map going left, takes to clock
+	; jr nz, .right	
+	jr nz, .no_map
 	ld a, [wPokegearRadioChannelAddr]
 	ld l, a
 	ld a, [wPokegearRadioChannelAddr + 1]
@@ -776,6 +885,7 @@ PokegearRadio_Joypad:
 	ld b, POKEGEARCARD_PHONE
 	jr .switch_page
 
+.right
 .no_phone
 	ld a, [wPokegearFlags]
 	bit POKEGEAR_MAP_CARD_F, a
@@ -843,9 +953,13 @@ PokegearPhone_Joypad:
 .right
 	ld a, [wPokegearFlags]
 	bit POKEGEAR_RADIO_CARD_F, a
-	ret z
+	; ret z
+	jr z, .no_map ; goes to clock	
+; .radio
 	ld c, POKEGEARSTATE_RADIOINIT
 	ld b, POKEGEARCARD_RADIO
+	jr .switch_page
+; .no_radio ; go to clock	
 .switch_page
 	call Pokegear_SwitchPage
 	ret
@@ -1363,7 +1477,7 @@ INCBIN "gfx/pokegear/clock.tilemap.rle"
 _UpdateRadioStation:
 	jr UpdateRadioStation
 
-; called from engine/sprite_anims/functions.asm
+; called from engine/sprite_anims/functions.asm / ; called from engine/gfx/sprite_anims.asm
 
 AnimateTuningKnob:
 	push bc
@@ -1679,9 +1793,6 @@ LoadStation_EvolutionRadio:
 	ld de, UnownStationName
 	ret
 
-DummyLoadStation: ; unreferenced
-	ret
-
 RadioMusicRestartDE:
 	push de
 	ld a, e
@@ -1769,7 +1880,7 @@ _TownMap:
 	xor a
 	ld [wStateFlags], a
 
-	call ClearBGPalettes
+	; call ClearBGPalettes
 	call ClearTilemap
 	call ClearSprites
 	call DisableLCD
@@ -1824,7 +1935,7 @@ _TownMap:
 	ldh [hInMenu], a
 	pop af
 	ld [wOptions], a
-	call ClearBGPalettes
+	; call ClearBGPalettes
 	ret
 
 .loop
@@ -2351,12 +2462,12 @@ Pokedex_GetArea:
 	ld c, 4
 	call Request2bpp
 	call LoadTownMapGFX
-	call FillKantoMap
+	call Dex_FillKantoMap
 	call .PlaceString_MonsNest
 	call TownMapPals
 	hlbgcoord 0, 0, vBGMap1
 	call TownMapBGUpdate
-	call FillJohtoMap
+	call Dex_FillJohtoMap
 	call .PlaceString_MonsNest
 	call TownMapPals
 	hlbgcoord 0, 0
@@ -2372,8 +2483,10 @@ Pokedex_GetArea:
 	call JoyTextDelay
 	ld hl, hJoyPressed
 	ld a, [hl]
-	and A_BUTTON | B_BUTTON
-	jr nz, .a_b
+	and B_BUTTON
+	jr nz, .b
+	and A_BUTTON
+	jr nz, .a
 	ldh a, [hJoypadDown]
 	and SELECT
 	jr nz, .select
@@ -2387,7 +2500,8 @@ Pokedex_GetArea:
 	call DelayFrame
 	jr .loop
 
-.a_b
+.a
+.b
 	call ClearSprites
 	pop af
 	ld [wTownMapCursorLandmark], a
@@ -2416,9 +2530,10 @@ Pokedex_GetArea:
 	ret
 
 .right
-	ld a, [wStatusFlags]
-	bit STATUSFLAGS_HALL_OF_FAME_F, a
-	ret z
+; only reveal Kanto map if beaten league: disabled
+	; ld a, [wStatusFlags]
+	; bit STATUSFLAGS_HALL_OF_FAME_F, a
+	; ret z
 	ldh a, [hWY]
 	and a
 	ret z
@@ -2466,6 +2581,17 @@ Pokedex_GetArea:
 	ld l, c
 	ld de, .String_SNest
 	call PlaceString
+; add blurb to let people know they can press select to see current location
+	hlcoord 1, 2
+	ld a, $48 ; part of SELECT >
+	ld [hli], a
+	ld a, $49 ; part of SELECT >
+	ld [hli], a
+	ld a, $4a ; part of SELECT >
+	ld [hli], a
+	ld a, $1d ; custom arrow cap + YOU
+	ld [hli], a ; $78
+	ld [hl], $1e
 	ret
 
 .String_SNest:
@@ -2637,6 +2763,14 @@ FillJohtoMap:
 	ld de, JohtoMap
 	jr FillTownMap
 
+Dex_FillJohtoMap:
+	ld de, DEX_JohtoMap
+	jr FillTownMap
+
+Dex_FillKantoMap:
+	ld de, DEX_KantoMap
+	jr FillTownMap
+
 FillKantoMap:
 	ld de, KantoMap
 FillTownMap:
@@ -2659,8 +2793,8 @@ TownMapPals:
 ; Current tile
 	ld a, [hli]
 	push hl
-; The palette map covers tiles $00 to $5f; $60 and above use palette 0
-	cp $60
+; The palette map covers tiles $00 to $67; $68 and above use palette 0
+	cp $68
 	jr nc, .pal0
 
 ; The palette data is condensed to nybbles, least-significant first.
@@ -2782,142 +2916,15 @@ LoadTownMapGFX:
 
 JohtoMap:
 INCBIN "gfx/pokegear/johto.bin"
+DEX_JohtoMap:
+INCBIN "gfx/pokegear/dex_johto.bin"
 
 KantoMap:
 INCBIN "gfx/pokegear/kanto.bin"
+DEX_KantoMap:
+INCBIN "gfx/pokegear/dex_kanto.bin"
 
 PokedexNestIconGFX:
 INCBIN "gfx/pokegear/dexmap_nest_icon.2bpp"
 FlyMapLabelBorderGFX:
 INCBIN "gfx/pokegear/flymap_label_border.1bpp"
-
-EntireFlyMap: ; unreferenced
-; Similar to _FlyMap, but scrolls through the entire
-; Flypoints data of both regions. A debug function?
-	xor a
-	ld [wTownMapPlayerIconLandmark], a
-	call ClearBGPalettes
-	call ClearTilemap
-	call ClearSprites
-	ld hl, hInMenu
-	ld a, [hl]
-	push af
-	ld [hl], $1
-	xor a
-	ldh [hBGMapMode], a
-	farcall ClearSpriteAnims
-	call LoadTownMapGFX
-	ld de, FlyMapLabelBorderGFX
-	ld hl, vTiles2 tile $30
-	lb bc, BANK(FlyMapLabelBorderGFX), 6
-	call Request1bpp
-	call FillKantoMap
-	call TownMapBubble
-	call TownMapPals
-	hlbgcoord 0, 0, vBGMap1
-	call TownMapBGUpdate
-	call FillJohtoMap
-	call TownMapBubble
-	call TownMapPals
-	hlbgcoord 0, 0
-	call TownMapBGUpdate
-	call TownMapMon
-	ld a, c
-	ld [wTownMapCursorCoordinates], a
-	ld a, b
-	ld [wTownMapCursorCoordinates + 1], a
-	ld b, SCGB_POKEGEAR_PALS
-	call GetSGBLayout
-	call SetDefaultBGPAndOBP
-.loop
-	call JoyTextDelay
-	ld hl, hJoyPressed
-	ld a, [hl]
-	and B_BUTTON
-	jr nz, .pressedB
-	ld a, [hl]
-	and A_BUTTON
-	jr nz, .pressedA
-	call .HandleDPad
-	call GetMapCursorCoordinates
-	farcall PlaySpriteAnimations
-	call DelayFrame
-	jr .loop
-
-.pressedB
-	ld a, -1
-	jr .exit
-
-.pressedA
-	ld a, [wTownMapPlayerIconLandmark]
-	ld l, a
-	ld h, 0
-	add hl, hl
-	ld de, Flypoints + 1
-	add hl, de
-	ld a, [hl]
-.exit
-	ld [wTownMapPlayerIconLandmark], a
-	pop af
-	ldh [hInMenu], a
-	call ClearBGPalettes
-	ld a, SCREEN_HEIGHT_PX
-	ldh [hWY], a
-	xor a ; LOW(vBGMap0)
-	ldh [hBGMapAddress], a
-	ld a, HIGH(vBGMap0)
-	ldh [hBGMapAddress + 1], a
-	ld a, [wTownMapPlayerIconLandmark]
-	ld e, a
-	ret
-
-.HandleDPad:
-	ld hl, hJoyLast
-	ld a, [hl]
-	and D_DOWN | D_RIGHT
-	jr nz, .ScrollNext
-	ld a, [hl]
-	and D_UP | D_LEFT
-	jr nz, .ScrollPrev
-	ret
-
-.ScrollNext:
-	ld hl, wTownMapPlayerIconLandmark
-	ld a, [hl]
-	cp NUM_FLYPOINTS - 1
-	jr c, .NotAtEndYet
-	ld [hl], -1
-.NotAtEndYet:
-	inc [hl]
-	jr .FillMap
-
-.ScrollPrev:
-	ld hl, wTownMapPlayerIconLandmark
-	ld a, [hl]
-	and a
-	jr nz, .NotAtStartYet
-	ld [hl], NUM_FLYPOINTS
-.NotAtStartYet:
-	dec [hl]
-.FillMap:
-	ld a, [wTownMapPlayerIconLandmark]
-	cp KANTO_FLYPOINT
-	jr c, .InJohto
-	call FillKantoMap
-	xor a
-	ld b, HIGH(vBGMap1)
-	jr .Finally
-
-.InJohto:
-	call FillJohtoMap
-	ld a, SCREEN_HEIGHT_PX
-	ld b, HIGH(vBGMap0)
-.Finally:
-	ldh [hWY], a
-	ld a, b
-	ldh [hBGMapAddress + 1], a
-	call TownMapBubble
-	call WaitBGMap
-	xor a
-	ldh [hBGMapMode], a
-	ret

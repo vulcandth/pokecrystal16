@@ -2,6 +2,8 @@ NewPokedexEntry:
 	ldh a, [hMapAnims]
 	push af
 	xor a
+	ld [wPokedexShinyToggle], a
+	ld [wPokedexEntryPageNum], a	
 	ldh [hMapAnims], a
 	call LowVolume
 	call ClearBGPalettes
@@ -14,6 +16,7 @@ NewPokedexEntry:
 	add POKEDEX_SCX
 	ldh [hSCX], a
 	xor a
+	ldh [hSCY], a
 	ld [wPokedexStatus], a
 	farcall _NewPokedexEntry
 	call WaitPressAorB_BlinkCursor

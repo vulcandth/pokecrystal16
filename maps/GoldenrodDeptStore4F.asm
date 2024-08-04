@@ -66,6 +66,10 @@ GoldenrodDeptStore4FGameboyKidText:
 
 	para "I heard there are"
 	line "others too."
+
+	para "Your #DEX shows"
+	line "how #MON really"
+	cont "evolve!"
 	done
 
 GoldenrodDeptStore4FDirectoryText:

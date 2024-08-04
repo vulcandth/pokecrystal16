@@ -36,6 +36,8 @@ CGBLayoutJumptable:
 	dw _CGB_PokegearPals
 	dw _CGB_StatsScreenHPPals
 	dw _CGB_Pokedex
+	dw _CGB_Pokedex_EvoPage
+	dw _CGB_Pokedex_PicsPage
 	dw _CGB_SlotMachine
 	dw _CGB_BetaTitleScreen
 	dw _CGB_GSIntro
@@ -190,6 +192,14 @@ _CGB_PokegearPals:
 	ld bc, 6 palettes
 	ld a, BANK(wBGPals1)
 	call FarCopyWRAM
+
+	hlcoord 18, 16, wAttrmap
+	ld bc, 1 ; 1 tile
+	ld a, 0 ; palette 0
+	set 5, a ; flip on y axis
+	call ByteFill
+
+	call ApplyAttrmap
 	call ApplyPals
 	ld a, TRUE
 	ldh [hCGBPalUpdate], a
@@ -257,7 +267,7 @@ INCLUDE "gfx/stats/stats.pal"
 
 _CGB_Pokedex:
 	ld de, wBGPals1
-	ld a, PREDEFPAL_POKEDEX
+	call CheckPokedexColor ; ld a, PREDEFPAL_POKEDEX
 	call GetPredefPal
 	call LoadHLPaletteIntoDE ; dex interface palette
 	ld a, [wCurPartySpecies]
@@ -269,6 +279,14 @@ _CGB_Pokedex:
 
 .is_pokemon
 	call GetMonPalettePointer
+	ld a, [wPokedexShinyToggle]
+	bit 0, a
+	jr z, .not_shiny
+	inc hl
+	inc hl
+	inc hl
+	inc hl
+.not_shiny	
 	call LoadPalette_White_Col1_Col2_Black ; mon palette
 ; black background for Pal 7
 	ld de, wBGPals1 palette 7 ; First color slot of Pal 7	
@@ -280,7 +298,7 @@ _CGB_Pokedex:
 	call GetBaseData
 	ld a, [wBaseType1]
 	ld c, a ; farcall will clobber a for the bank
-	farcall GetMonTypeIndex
+	predef GetMonTypeIndex
 ; load the 1st type pal 
 	; type index is already in c
 	ld de, wBGPals1 palette 7 + 2 ; slot 2 of pal 7
@@ -288,11 +306,18 @@ _CGB_Pokedex:
 ; mon type 2
 	ld a, [wBaseType2]
 	ld c, a ; farcall will clobber a for the bank
-	farcall GetMonTypeIndex
+	ld a, [wBaseType1]
+	cp c
+	jr z, .same_type	
+	predef GetMonTypeIndex
 ; load the 2nd type pal 
 	; type index is already in c
 	ld de, wBGPals1 palette 7 + 4 ; slot 3 of pal 7
 	farcall LoadMonBaseTypePal ; loads type color into slot 3 of pal 7
+	jr .got_palette
+.same_type
+	ld de, wBGPals1 palette 7 + 4 ; slot 3 of pal 7
+	call LoadSingleBlackPal	
 .got_palette
 	call WipeAttrmap
 	hlcoord 1, 1, wAttrmap
@@ -300,11 +325,10 @@ _CGB_Pokedex:
 	ld a, $1 ; green question mark palette
 	call FillBoxCGB
 
-	; Both mon types
-	; if no 2nd Type, those 4 Squares will appear normally as blank Black Tiles
-	hlcoord 9, 1, wAttrmap
-	lb bc, 1, 8 ; box 1 tile in HEIGHT, 8 tiles in WIDTH
-	ld a, $7 ; mon base type pals
+; mon base types
+	hlcoord 9, 4, wAttrmap
+	lb bc, 1, 8
+	ld a, 7 | VRAM_BANK_1 ; mon base type pals ; VRAM 1
 	call FillBoxCGB
 
 	call InitPartyMenuOBPals
@@ -313,10 +337,274 @@ _CGB_Pokedex:
 	ld bc, 1 palettes
 	ld a, BANK(wOBPals1)
 	call FarCopyWRAM
+
+; category enclosure + page nums + A >
+	hlcoord 18, 5, wAttrmap
+	ld bc, 2
+	ld a, 0 | VRAM_BANK_1 ; dex pal PREDEFPAL_POKEDEX
+	call ByteFill
+	hlcoord 18, 7, wAttrmap
+	ld bc, 2
+	ld a, 0 | VRAM_BANK_1 ; dex pal PREDEFPAL_POKEDEX
+	call ByteFill
+
+; ; category box lateral sides
+; 	hlcoord 8, 5, wAttrmap
+; 	lb bc, 3, 1
+; 	ld a, 0 | VRAM_BANK_1 ; dex pal PREDEFPAL_POKEDEX
+; 	call FillBoxCGB	
+	
+; 	hlcoord 19, 5, wAttrmap
+; 	lb bc, 2, 1
+; 	ld a, 0 | X_FLIP | VRAM_BANK_1 ; dex pal PREDEFPAL_POKEDEX
+; 	call FillBoxCGB
+
 	call ApplyAttrmap
 	call ApplyPals
 	ld a, TRUE
 	ldh [hCGBPalUpdate], a
+	ret
+
+_CGB_Pokedex_EvoPage:
+	call WipeAttrmap
+
+	ld de, wBGPals1
+	; ld a, PREDEFPAL_POKEDEX
+	call CheckPokedexColor
+	call GetPredefPal
+	call LoadHLPaletteIntoDE ; dex interface palette
+
+	ld de, wBGPals1 palette 6
+	ld a, PREDEFPAL_POKEDEX
+	call GetPredefPal
+	call LoadHLPaletteIntoDE ; dex interface palette	
+
+; main screen within border, vram 1
+	hlcoord 1, 1, wAttrmap
+	lb bc, 16, 19
+	ld a, 0 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+
+; mon slot 1 types
+	hlcoord 16, 2, wAttrmap
+	lb bc, 2, 4
+	ld a, 1 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; mon slot 2 types
+	hlcoord 16, 5, wAttrmap
+	lb bc, 2, 4
+	ld a, 2 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; mon slot 3 types
+	hlcoord 16, 8, wAttrmap
+	lb bc, 3, 4
+	ld a, 3 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; mon slot 4 types
+	hlcoord 16, 12, wAttrmap
+	lb bc, 3, 4
+	ld a, 4 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; flip bottom row of sprite icon borders
+	hlcoord 1, 4, wAttrmap
+	ld bc, 4
+	ld a, 0 | Y_FLIP | VRAM_BANK_1 ; VRAM 1
+	call ByteFill
+	hlcoord 1, 8, wAttrmap
+	ld bc, 4
+	call ByteFill	
+	hlcoord 1, 12, wAttrmap
+	ld bc, 4
+	call ByteFill	
+	hlcoord 1, 16, wAttrmap
+	ld bc, 4
+	call ByteFill				
+
+	call InitPartyMenuOBPals
+	call ApplyAttrmap
+	call ApplyPals
+	ld a, TRUE
+	ldh [hCGBPalUpdate], a
+	ret
+
+_CGB_Pokedex_PicsPage:
+	call WipeAttrmap
+	ld de, wBGPals1
+	; ld a, PREDEFPAL_POKEDEX
+	call CheckPokedexColor
+	call GetPredefPal
+	call LoadHLPaletteIntoDE ; dex interface palette
+; pokemon pals
+	ld a, [wCurPartySpecies]
+	call GetMonPalettePointer
+	ld a, [wPokedexShinyToggle]
+	bit 0, a
+	jr z, .not_shiny
+	inc hl
+	inc hl
+	inc hl
+	inc hl
+.not_shiny
+	call LoadPalette_White_Col1_Col2_Black ; mon palette
+; secondary pokedex pal
+	ld de, wBGPals1 palette 6
+	ld a, PREDEFPAL_POKEDEX
+	call GetPredefPal
+	call LoadHLPaletteIntoDE ; dex interface palette	
+	
+	ld de, wBGPals1 palette 6
+	call LoadSingleBlackPal
+; black background
+	ld de, wBGPals1 palette 7	
+	call LoadSingleBlackPal
+
+; animated front pic + border
+	hlcoord 0, 0, wAttrmap
+	lb bc, 9, 9
+	ld a, 0 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; animated front pic
+	hlcoord 1, 1, wAttrmap
+	lb bc, 7, 7
+	ld a, 1 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+
+; back pic border
+	hlcoord 10, 0, wAttrmap
+	lb bc, 9, 9
+	ld a, 0 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; ; back pic
+	hlcoord 11, 2, wAttrmap
+	lb bc, 6, 6
+	ld a, 1 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+
+; sprite box border
+	hlcoord 1, 13, wAttrmap
+	lb bc, 4, 4
+	ld a, 0 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+
+; page/up down arrows
+	hlcoord 9, 0, wAttrmap
+	ld [hl], 0 ; remove VRAM 1 bit
+	hlcoord 18, 0, wAttrmap
+	ld [hl], 0 ; remove VRAM 1 bit
+
+; front/back pic bottom border fix
+	hlcoord 0, 8, wAttrmap
+	ld bc, SCREEN_WIDTH
+	ld a, 0 | Y_FLIP | VRAM_BANK_1
+	call ByteFill
+; lower right corner of front pic
+	hlcoord 8, 8, wAttrmap
+	ld [hl], 0 | Y_FLIP | X_FLIP | VRAM_BANK_1
+	inc hl
+	ld [hl], 0 ; remove VRAM 1 bit
+; lower right corner of back pic
+	hlcoord 18, 8, wAttrmap
+	ld [hl], 0 | X_FLIP | Y_FLIP | VRAM_BANK_1
+	inc hl
+	ld [hl], 0 ; remove VRAM 1 bit
+
+; upper right corner of front pic
+	hlcoord 8, 0, wAttrmap
+	ld [hl], 0 | X_FLIP | VRAM_BANK_1
+; front pic right vertical side fix
+	hlcoord 8, 1, wAttrmap
+	lb bc, 7, 1
+	ld a, 0 | X_FLIP | Y_FLIP | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+; back pic right vertical side fix	
+	hlcoord 18, 1, wAttrmap
+	lb bc, 7, 1
+	ld a, 0 | X_FLIP | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB	
+
+; animated icon, upper right corner fix
+	hlcoord 4, 13, wAttrmap
+	ld [hl], 0 | X_FLIP | VRAM_BANK_1
+; animated icon, lower right corner fix
+	hlcoord 4, 16, wAttrmap
+	ld [hl], 0 | X_FLIP | Y_FLIP | VRAM_BANK_1
+; animated icon, lower left corner fix
+	hlcoord 1, 16, wAttrmap
+	ld [hl], 0 | Y_FLIP | VRAM_BANK_1		
+; sprite border right side
+	hlcoord 4, 14, wAttrmap
+	ld [hl], 0 | X_FLIP | VRAM_BANK_1
+	hlcoord 4, 15, wAttrmap
+	ld [hl], 0 | X_FLIP | VRAM_BANK_1
+; page bottom border row, bottom of sprite border	
+	hlcoord 2, 16, wAttrmap
+	ld bc, 2
+	ld a, 0 | Y_FLIP | VRAM_BANK_1
+	call ByteFill
+; > CRY, set VRAM	
+	hlcoord 14, 17, wAttrmap
+	lb bc, 1, 2
+	ld a, 0 | VRAM_BANK_1 ; VRAM 1
+	call FillBoxCGB
+
+	call InitPartyMenuOBPals
+	call ApplyAttrmap
+	call ApplyPals
+	ld a, TRUE
+	ldh [hCGBPalUpdate], a
+	ret
+
+CheckPokedexColor:
+	ld a, [wCurPokedexColor]
+	cp DEXCOLOR_BLUE
+	jr nz, .Purple
+	ld a, PREDEFPAL_TRADE_TUBE
+	ret
+
+.Purple
+	cp DEXCOLOR_PURPLE
+	jr nz, .Brown
+	ld a, PREDEFPAL_RB_PURPLEMON
+	ret
+
+.Brown
+	cp DEXCOLOR_BROWN
+	jr nz, .Green
+	ld a, PREDEFPAL_RB_BROWNMON
+	ret
+
+.Green
+	cp DEXCOLOR_GREEN
+	jr nz, .Pink
+	ld a, PREDEFPAL_RB_GREENMON
+	ret
+
+.Pink
+	cp DEXCOLOR_PINK
+	jr nz, .Yellow
+	ld a, PREDEFPAL_RB_PINKMON
+	ret
+
+.Yellow
+	cp DEXCOLOR_YELLOW
+	jr nz, .Cyan
+	ld a, PREDEFPAL_RB_YELLOWMON
+	ret
+
+.Cyan
+	cp DEXCOLOR_CYAN
+	jr nz, .Gray
+	ld a, PREDEFPAL_RB_CYANMON
+	ret
+
+.Gray
+	cp DEXCOLOR_GRAY
+	jr nz, .Red
+	ld a, PREDEFPAL_CGB_BADGE
+	ret
+
+.Red
+	ld a, PREDEFPAL_POKEDEX
 	ret
 
 PokedexQuestionMarkPalette:
@@ -419,7 +707,7 @@ INCLUDE "gfx/pc/orange.pal"
 
 _CGB_PokedexUnownMode:
 	ld de, wBGPals1
-	ld a, PREDEFPAL_POKEDEX
+	call CheckPokedexColor ; ld a, PREDEFPAL_POKEDEX
 	call GetPredefPal
 	call LoadHLPaletteIntoDE
 	ld a, [wCurPartySpecies]
@@ -825,7 +1113,7 @@ _CGB_BetaPikachuMinigame:
 
 _CGB_PokedexSearchOption:
 	ld de, wBGPals1
-	ld a, PREDEFPAL_POKEDEX
+	call CheckPokedexColor ; ld a, PREDEFPAL_POKEDEX
 	call GetPredefPal
 	call LoadHLPaletteIntoDE
 	call WipeAttrmap

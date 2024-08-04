@@ -66,6 +66,23 @@ GaveGoodRodText:
 
 	para "They go wherever"
 	line "there is water."
+
+	para "By the way,"
+	line "your #DEX shows"
+	cont "fishing groups for"
+	cont "#MON."
+
+	para "Different spots"
+	line "have similar fish."
+
+	para "The #GEAR shows"
+	line "the fishing group"
+	cont "of where you are"
+	cont "currently."
+
+	para "Check them out to"
+	line "know what you"
+	cont "might catch!"
 	done
 
 DontWantGoodRodText:
