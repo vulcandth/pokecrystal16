@@ -220,8 +220,10 @@ Dex_Pics_DrawBorder:
 	call FillBoxWithByte
 
 	ld a, [wTempSpecies]
-	dec a
-	call CheckCaughtMon
+	call GetPokemonIndexFromID
+	ld d, h
+	ld e, l
+	call CheckCaughtMonIndex ; call CheckCaughtMon
 	jr z, .caught_ball_done
 	hlcoord 5, 11
 	ld [hl], $4f ; pokeball icon

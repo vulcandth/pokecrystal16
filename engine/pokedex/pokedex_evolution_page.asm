@@ -14,7 +14,6 @@ DisplayDexMonEvos:
 	call ClearBox
 	call EVO_Draw_border
 
-	; ld b,b
 	ld a, [wCurPartySpecies]
 	callfar GetLowestEvolutionStage ; uses wCurPartySpecies
 	ld a, [wCurPartySpecies]
@@ -30,7 +29,6 @@ DisplayDexMonEvos:
 	call PlaceString
 
 ; place the arrow to indicate the current mon we're looking at
-	; ld b,b
 	ld a, [wCurDamage + 2] ; mon we started with
 	ld b, a
 	ld a, [wCurPartySpecies] ; stage 1 mon
@@ -54,7 +52,6 @@ DisplayDexMonEvos:
 	xor a
 	ld [wStatsScreenFlags], a
 	
-	; ld b,b
 	ld a, [wCurPartySpecies]
 	call GetPokemonIndexFromID
 	ld b, h
@@ -78,7 +75,7 @@ DisplayDexMonEvos:
 	push af ; manner of evo
 	ld a, [wCurDamage]
 	and a
-	jr z, .normal_line
+	jr z, .normal_line	
 	; we're in a multi-page evo line
 	pop hl ; dont need this value, just fix stack
 	pop af ; dont need this value, just fix stack
@@ -122,7 +119,6 @@ DisplayDexMonEvos:
 	inc hl
 .no_extra1
 	inc hl ; species byte
-	; ld b,b
 	push af
 	push bc
 	ldh a, [hTemp] ; BANK(EvosAttacksPointers)
@@ -133,8 +129,6 @@ DisplayDexMonEvos:
 	call EVO_gethlcoord
 	call PlaceString
 
-; print arrow?
-	; ld b,b
 	ld a, [wCurDamage + 2]
 	ld b, a
 	ld a, [wNamedObjectIndex]
@@ -154,7 +148,6 @@ DisplayDexMonEvos:
 	call EVO_inchlcoord
 
 ; done printing species
-	; ld b,b
 	pop hl ; manner of evo byte +1
 	pop af ; manner of evo
 	push hl ; manner of evo byte +1
@@ -181,7 +174,6 @@ DisplayDexMonEvos:
 	inc hl ; species byte 1
 	inc hl ; species byte 2??
 	inc hl ; points to next evo manner or 0
-	; ld b,b
 	ldh a, [hTemp] ; BANK(EvosAttacksPointers)
 	call GetFarByte
 	pop bc ; previous count
@@ -211,7 +203,6 @@ DisplayDexMonEvos:
 	cp 3
 	jp z, .exit_early_print_cont2
 	push bc ; count and stage
-	; ld b,b
 	ld a, [wCurPartySpecies]
 	call GetPokemonIndexFromID
 	ld b, h
@@ -229,7 +220,6 @@ DisplayDexMonEvos:
 	inc hl ; species byte
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarWord ; stage 2 species
-	; ld b,b
 	ld b, h
 	ld c, l
 	ld hl, EvosAttacksPointers
@@ -345,9 +335,7 @@ EVO_level:
 	ld [hl], "<DEX_LV_VRAM1>" ; lvl icon
 
 	pop hl ; pointing to lvl byte
-	; ld b,b
-	; ld a, BANK("Evolutions and Attacks Pointers")
-	ldh a, [hTemp]
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte
 	ld [wTextDecimalByte], a
 	ld de, wTextDecimalByte
@@ -359,8 +347,6 @@ EVO_level:
 	ret
 
 EVO_item:
-	; ld b,b
-	; ld a, BANK("Evolutions and Attacks Pointers")
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte
 	call EVO_inchlcoord
@@ -380,8 +366,6 @@ EVO_item:
 	db "ITEM@"
 
 EVO_trade:
-	; ld b,b
-	; ld a, BANK("Evolutions and Attacks Pointers")
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte
 	push af ; item index or -1 for no item
@@ -415,10 +399,8 @@ EVO_trade:
 	db " ", "+","@"
 
 EVO_happiness:
-	; ld b,b
 	push hl ; time of day byte
 	pop hl ; time of day byte
-	; ld a, BANK("Evolutions and Attacks Pointers")
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte
 	
@@ -447,13 +429,11 @@ EVO_happiness:
 	; db "NITE@"
 
 EVO_stats:
-	; ld b,b
 	push hl ; level Needed byte
 	call EVO_gethlcoord
 	ld [hl], "<DEX_LV_VRAM1>" ; for vram1 side
 
 	pop hl ; level needed byte
-	; ld a, BANK("Evolutions and Attacks Pointers")
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte ; stats needed
 	
@@ -468,7 +448,6 @@ EVO_stats:
 	call PrintNum
 	
 	pop hl ; stats const needed byte
-	; ld a, BANK("Evolutions and Attacks Pointers")
 	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte ; Stats Const, ATK >= DEF etc
 
@@ -683,7 +662,6 @@ EVO_place_Mon_Icon:
 	push bc
 	push de
 	push hl
-	; ld b,b
 	ld a, [wStatsScreenFlags]
 	inc a
 	ldh [hObjectStructIndex], a
@@ -803,19 +781,18 @@ EVO_set_multi_page_ptr:
 .start
 	push bc
 	ld a, [wCurPartySpecies] ; stage 1 evo
-	dec a
-	ld b, 0
-	ld c, a
+	call GetPokemonIndexFromID
+	ld b, h
+	ld c, l
 	ld hl, EvosAttacksPointers
-	add hl, bc
-	add hl, bc
 	ld a, BANK(EvosAttacksPointers)
-	call GetFarWord
+	call LoadDoubleIndirectPointer
+	; ldh [hTemp], a ; BANK("Evolutions and Attacks Pointers")
 	ld a, [wCurDamage + 1]
 	and a 
 	call nz, .get_stage2
 .loop
-	ldh a, [hTemp]
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte ; manner of evo ; if zero, no evos
 	ld d, a
 	pop bc ; 4th entry, 8th entry, etc 
@@ -832,10 +809,11 @@ EVO_set_multi_page_ptr:
 .no_extra1
 	inc hl
 	inc hl ; species byte
+	inc hl ; species byte 2
 	inc hl ; next EVO manner byte
 	jr .loop
 .get_stage2:
-	ldh a, [hTemp]
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
 	call GetFarByte ; manner of evo ; if zero, no evos
 	; check for 0? shouldnt encounter 0
 	cp EVOLVE_STAT
@@ -843,18 +821,15 @@ EVO_set_multi_page_ptr:
 	inc hl
 .no_extra2
 	inc hl
-	inc hl ; species byte
-	; ld a, BANK("Evolutions and Attacks Pointers")
-	ldh a, [hTemp]
-	call GetFarByte ; stage 2 species		
-	dec a
-	ld b, 0
-	ld c, a
+	inc hl ; species byte 1
+	inc hl ; species byte 2
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
+	call GetFarWord ; stage 2 species		
+	ld b, h
+	ld c, l
 	ld hl, EvosAttacksPointers
-	add hl, bc
-	add hl, bc
 	ld a, BANK(EvosAttacksPointers)
-	call GetFarWord	
+	call LoadDoubleIndirectPointer
 	ret
 
 EVO_place_CaughtIcon:
@@ -863,8 +838,10 @@ EVO_place_CaughtIcon:
 	push bc
 	push af
 	ld a, [wTempSpecies]
-	dec a
-	call CheckCaughtMon
+	call GetPokemonIndexFromID
+	ld d, h
+	ld e, l
+	call CheckCaughtMonIndex ; call CheckCaughtMon
 	and a
 	jr z, .done
 	call EVO_gethlcoord
