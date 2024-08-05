@@ -698,7 +698,9 @@ INCBIN "gfx/pokedex/dex_pagenums.2bpp"
 Pokedex_MathTiles:
 INCBIN "gfx/pokedex/math_symbols_inverted.1bpp"
 Pokedex_Imperial_Tiles:
-INCBIN "gfx/pokedex/POKE_imperial_symbols_inverted.1bpp"
+INCBIN "gfx/pokedex/inversed_feet_inches.1bpp"
+Pokedex_RightArrow_Tile:
+INCBIN "gfx/pokedex/inversed_rightarrow.1bpp"
 
 SECTION "Nayru Pokedex", ROMX
 INCLUDE "engine/pokedex/pokedex.asm"

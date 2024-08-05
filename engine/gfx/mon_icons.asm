@@ -451,16 +451,10 @@ Pokedex_InitAnimatedMonIcon:
 	ld a, [wTempSpecies]
 	ld [wCurPartySpecies], a
 	call SetDexMonIconColor_NoShiny
-	
-	; ld a, [wTempIconSpecies]
-	; call ReadMonMenuIcon
-	; ld [wCurIcon], a
-	; call GetMemIconGFX
 
 	ld a, [wTempIconSpecies]
 	ld [wCurIcon], a
-	xor a
-	call GetIconGFX	
+	call GetMemIconGFX	
 
 	ld a, [wStatsScreenFlags]
 	cp 11

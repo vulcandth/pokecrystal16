@@ -1,3 +1,10 @@
+IF !DEF(wBaseHPAtkDefSpdEVs) ; using statexp and not EVs
+DEF POKEDEX_STATSPAGE_MAX_PAGE_NUM EQU 3
+ELSE
+DEF POKEDEX_STATSPAGE_MAX_PAGE_NUM EQU 4
+ENDC
+EXPORT POKEDEX_STATSPAGE_MAX_PAGE_NUM
+
 String_BASE_text:
 	db "BASE       @" ; @ 8, 6
 String_STATS_text:
@@ -57,7 +64,10 @@ ELSE
 	call Pokedex_PrintHatchSteps ; 1 line
 	call Pokedex_Get_GenderRatio ; 1 line	
 ENDC ; done handling EVs/StatExp differences
-	jp DexEntry_IncPageNum
+	; jp DexEntry_IncPageNum
+	xor a
+	ld [wPokedexEntryPageNum], a
+	ret	
 
 .Base_stats_text:
 	db "BASE STATS@"

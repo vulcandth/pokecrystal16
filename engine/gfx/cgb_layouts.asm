@@ -410,12 +410,15 @@ _CGB_Pokedex_EvoPage:
 	ld bc, 4
 	ld a, 0 | Y_FLIP | VRAM_BANK_1 ; VRAM 1
 	call ByteFill
+
 	hlcoord 1, 8, wAttrmap
 	ld bc, 4
-	call ByteFill	
+	call ByteFill
+
 	hlcoord 1, 12, wAttrmap
 	ld bc, 4
-	call ByteFill	
+	call ByteFill
+	
 	hlcoord 1, 16, wAttrmap
 	ld bc, 4
 	call ByteFill				

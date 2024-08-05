@@ -595,22 +595,21 @@ Pokedex_ReinitDexEntryScreen:
 	ld a, [wPokedexEntryType]
 	cp DEXENTRY_BASESTATS
 	jr nz, .moves
-	
+
 	; dec page, since it's auto inc'd after printing
 	ld a, [wPokedexEntryPageNum]
 	dec a
 	ld b, a
-	ld a, $3 ; currently max supported possible pages [4] (we have tiles for up to 9 tho)
-	; by dec'ing the current page num, we could now have -1 (255)
-	cp b
-	jr nc, .basestats
-	; so if carry flag set, we know we had been on page 4, and after printing it became 4
-	ld b, $3 ; page index for page 4, our max page
+	cp $ff ; were we on the max page? would have page num turned to 0, -1 is $ff
+	jr z, .put_max_page
 .basestats
 	ld a, b
 	ld [wPokedexEntryPageNum], a
 	farcall DisplayDexMonStats
 	jr .cont
+.put_max_page
+	ld b, POKEDEX_STATSPAGE_MAX_PAGE_NUM - 1 ; 3 for vanilla, 4 for EVs.
+	jr .basestats
 
 ; if not lore or base stats, it's moves
 .moves
@@ -854,8 +853,9 @@ Evos_Page:
 	ldh [hBGMapMode], a
 	call ClearSprites
 	call Pokedex_GetSelectedMon
-	ld [wCurPartySpecies], a	
-	push af
+	ld [wCurPartySpecies], a
+	call GetPokemonIndexFromID
+	push hl
 	; farcall PrintDexEntry
 	; pop af
 	; ld [wJumptableIndex], a
@@ -2663,8 +2663,8 @@ Pokedex_CheckSeen:
 	push hl
 	ld a, [wTempSpecies]
 	call CheckSeenMon
-	; ld a, 1 ; DEBUG, to unlock all unseen mon
-	; and a ; DEBUG, to unlock all unseen mon
+	ld a, 1 ; DEBUG, to unlock all unseen mon
+	and a ; DEBUG, to unlock all unseen mon
 	pop hl
 	pop de
 	ret
@@ -3719,6 +3719,7 @@ Pokedex_LoadPageNums:
 Pokedex_LoadInversedFont:
 	ld a, 1
 	ldh [rVBK], a
+
 	ld hl, vTiles1
 	lb bc, BANK(FontInversed), 128 ; $80 tiles
 	ld de, FontInversed
@@ -3729,11 +3730,17 @@ Pokedex_LoadInversedFont:
 	ld de, Pokedex_MathTiles
 	ld a, BANK(Pokedex_MathTiles)
 	call Get1bpp
-	ld hl, vTiles0 tile $cc
-	lb bc, BANK(Pokedex_Imperial_Tiles), 4 ; 4 tiles
+	ld hl, vTiles0 tile $ce
+	lb bc, BANK(Pokedex_Imperial_Tiles), 2 ; 4 tiles
 	ld de, Pokedex_Imperial_Tiles
 	ld a, BANK(Pokedex_Imperial_Tiles)
 	call Get1bpp
+	ld hl, vTiles0 tile $eb
+	lb bc, BANK(Pokedex_RightArrow_Tile), 1 ; 1 tiles
+	ld de, Pokedex_RightArrow_Tile
+	ld a, BANK(Pokedex_RightArrow_Tile)
+	call Get1bpp
+
 	ld a, $0
 	ldh [rVBK], a	
 	ret
@@ -3758,8 +3765,8 @@ Pokedex_InvertTiles:
 	ld de, Pokedex_MathTiles
 	ld a, BANK(Pokedex_MathTiles)
 	call Get1bpp
-	ld hl, vTiles0 tile $cc
-	lb bc, BANK(Pokedex_Imperial_Tiles), 4 ; 2 tiles
+	ld hl, vTiles0 tile $ce
+	lb bc, BANK(Pokedex_Imperial_Tiles), 2 ; 2 tiles
 	ld de, Pokedex_Imperial_Tiles
 	ld a, BANK(Pokedex_Imperial_Tiles)
 	call Get1bpp
