@@ -81,7 +81,7 @@ Pokedex_DetailedArea_Trees:
 	ret
 
 Dex_Check_Trees_firstcommon:
-	ld a, DEXENTRY_AREA_TREES_RARE
+	ld a, DEXENTRY_AREA_TREES_COMMON
 	jr Dex_Check_Trees_firstrare.stub
 Dex_Check_Trees_firstrare:
 	ld a, DEXENTRY_AREA_TREES_RARE
@@ -255,7 +255,7 @@ Dex_Check_commontree_rocksmash_set:
 	ld a, BANK(TreeMons)
 	call GetFarWord
 ; TreeMonSet_Rock::
-; 	db 90, KRABBY,     15
+; 	dbbw 10, 10, AIPOM ; species is 2 bytes instead of 1
 .loop
 	ld a, BANK(TreeMons)
 	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
@@ -263,16 +263,20 @@ Dex_Check_commontree_rocksmash_set:
 	jr z, .done
 	ld b, a ; encounter %
 	; we arent at the end, so increment ptr by 1 and check species, that's all we care about
-	inc hl
+	inc hl ; encounter lvl
+	inc hl ; species 1st byte
+	push hl
 	ld a, BANK(TreeMons)
-	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
-	ld c, a ; pokemon species of entry in ContestMons
+	call GetFarWord ;; species
+	call GetPokemonIDFromIndex
+	pop hl
+	ld c, a
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	call z, .found
 	; species didnt match, inc hl by 3, need to check for -1
-	inc hl
-	inc hl
+	inc hl ; species 2nd byte
+	inc hl ; encounter %/-1
 	jr .loop
 .found
 	ld a, [wPokedexEvoStage3]
@@ -304,12 +308,14 @@ Dex_Check_raretree_set:
 	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
 	cp -1
 	jr z, .loop2setup
-	inc hl
-	inc hl
-	inc hl
+	; we are TRYING to get to -1 so we can get to rare tree set
+	inc hl ; now pointing to lvl
+	inc hl ; now pointing to first species byte
+	inc hl ; now pointing to second species byte
+	inc hl ; now is on encounter%/-1
 	jr .loop1
 .loop2setup
-	inc hl
+	inc hl ; encounter % of rare tree set
 .loop2
 	ld a, BANK(TreeMons)
 	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
@@ -317,16 +323,20 @@ Dex_Check_raretree_set:
 	jr z, .done
 	ld b, a ; encounter %
 	; we arent at the end, so increment ptr by 1 and check species, that's all we care about
-	inc hl
+	inc hl ; lvl of encounter
+	inc hl ; species 1st byte
 	ld a, BANK(TreeMons)
-	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
+	push hl
+	call GetFarWord ; lvl of encounter
+	call GetPokemonIDFromIndex
+	pop hl
 	ld c, a ; pokemon species of entry in ContestMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	call z, .found
-	; species didnt match, inc hl by 3, need to check for -1
-	inc hl
-	inc hl
+	; species didnt match, inc hl by 2, need to check for -1
+	inc hl ; second species byte
+	inc hl ; encounter byte
 	jr .loop2
 .found
 	ld a, [wPokedexEvoStage3]
@@ -431,7 +441,7 @@ Dex_Check_rocksmash:
 ; return zero in 'a' if found, else 1 in 'a'
 	ld hl, RockSmashMons ; table of pointers, NUM_ROCKSMASH_SETS
 	ld b, 0 ; corresponds to NUM_ROCKSMASH_SETS, so we check each entry, to support more than one rock smash set
-.setloop	
+.setloop
 	push bc ; rock smash set index
 	push hl ; RockSmashMons ptr
 	call Dex_Check_commontree_rocksmash_set

@@ -2603,6 +2603,8 @@ Pokedex_PlaceDefaultStringIfNotSeen:
 	push hl
 	push de
 	call CheckSeenMonIndex
+	; ld a, 1 ; DEBUG
+	; and a ; DEBUG
 	pop de
 	pop hl
 	ret nz

@@ -1,12 +1,12 @@
 MACRO casinomon
 ; species, coins needed
-	db \1
+	dw \1 ; species in pk16 needs 2 bytes ; db \1
 	dw \2
 ENDM
 
 MACRO specialencounter
 ; requested mon, offered mon, item, OT ID, OT name, gender requested
-	db \1
+	dw \1 ; species in pk16 needs 2 bytes ; db \1
 	dw \2
 	map_id \3
 	dw \4
@@ -15,7 +15,7 @@ ENDM
 CasinoMons::
 ; usually 3 per region, but not a hard coded limit
 	; region map ; 2 bytes (group/ID)
-	; species, coins (2 bytes)
+	; species (pk16 2 bytes), coins (2 bytes)
 
 	; johto, from maps\goldenrodgamecorner.asm
 	map_id GOLDENROD_GAME_CORNER

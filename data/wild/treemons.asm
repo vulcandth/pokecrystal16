@@ -21,7 +21,7 @@ RockSmashMons::
 
 ; Two tables each (common, rare).
 ; Structure:
-;	db  %, species, level
+;	db  %, level, species 
 
 TreeMonSet_City:
 TreeMonSet_Canyon:

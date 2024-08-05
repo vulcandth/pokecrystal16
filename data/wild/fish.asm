@@ -249,6 +249,7 @@ FishGroups_Names::
 	dw Group13_Name
 	assert_table_length NUM_FISHGROUPS ; (13, NONE is not included in the count)
 
+; max length : 11 characters
 Group1_Name:
 	db " SHORE@"
 Group2_Name:

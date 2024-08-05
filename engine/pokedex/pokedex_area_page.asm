@@ -2,6 +2,12 @@ INCLUDE "engine/pokedex/pokedex_area_page_trees_rocks.asm"
 INCLUDE "engine/pokedex/pokedex_area_page_fishing.asm"
 INCLUDE "data/wild/non_wildmon_locations.asm"
 
+DEF NUM_GRASS_ENTRIES EQU 7
+DEF NUM_SURF_ENTRIES EQU 3
+
+DEF ENTRY_SIZE_BYTES EQU 3 ; pk 16, species is 2 bytes
+DEF ENTRY_SKIP_ENCOUNTER_RATES EQU 6 ; see the wild data: db 2 percent, 2 percent, 2 percent ; encounter rates: morn/day/nite
+
 String_johto_text:
 	db "JOHTO:     @"
 String_kanto_text:
@@ -293,7 +299,6 @@ Dex_FindFirstList:
 	ld a, DEXENTRY_AREA_GIFTMONS
 	ret
 
-
 Print_area_entry:
 ; morn,day,nite,space,map name
 ; time of day
@@ -303,7 +308,7 @@ Print_area_entry:
 	hlcoord 2, 10 ; same position regardless
 	call DexEntry_adjusthlcoord ; current print line needs to be in c
 	ld [hl], $65 ; day icon tile
-	ld de, 6
+	ld de, 6 ; spaces on screen
 	add hl, de
 	ld [hl], $6b ; day icon tile
 	add hl, de
@@ -450,7 +455,8 @@ Pokedex_DetailedArea_grass:
 	inc hl
 	inc hl
 	inc hl ; should now point to lvl of encounter slot
-	inc hl ; now pointing to species
+	inc hl ; now pointing to species 1
+
 ; morn
 	ld a, 0 ; morn
 	call Pokedex_Parse_grass ; encounter % in a
@@ -526,19 +532,23 @@ Pokedex_DetailedArea_grass:
 Pokedex_Parse_grass:
 	push hl ; first species byte in morn
 	push bc ; current print line
-	ld c, 14 ; 7 entries * 2 bytes
+	ld c, NUM_GRASS_ENTRIES * ENTRY_SIZE_BYTES ; 7 entries * 3 bytes for PK16
 	call SimpleMultiply
 	ld b, 0
-	ld c, a ; time of day adjustment
+	ld c, a ; ; time of day adjustment, since each entry is 3 bytes
 	add hl, bc
 	ld c, 0; up to NUM_GRASSMON ; * 3 ; total mon entries, morn/day/nite, 7 per
 	ld b, 0 ; for calcing encounter %
 	; 30%, 30%, 20%, 10%, 5%, 4%, 1%
 	push bc ; % and NUM_GRASSMON
 .map_loop
+	push hl
 	ld a, BANK(JohtoGrassWildMons)
-	call GetFarByte ; bkup hl and change to getfarword for pk16?
+	call GetFarWord ; bkup hl and change to getfarword for pk16?
+	call GetPokemonIDFromIndex
+	pop hl
 	; a is species
+	inc hl ; pointint to bytes 2 of species
 	inc hl ; pointing to next mon lvl
 	inc hl ; pointing to next mon species
 	; a is mon species 
@@ -572,7 +582,7 @@ Grass_check_any_remaining:
 
 .landmark_loop
 	call DexArea_IncWildMonIndex
-	ld bc, 6
+	ld bc, ENTRY_SKIP_ENCOUNTER_RATES ; 6 bytes
 	add hl, bc
 	push hl ; now pointing to species
 ; morn
@@ -597,7 +607,7 @@ Grass_check_any_remaining:
 	jr nz, .entries_remaining
 
 	ld b, 0
-	ld c, GRASS_WILDDATA_LENGTH - 6 ; to be at the right pointer to read the -1 if it's there, aka the mapgroup/num ptr
+	ld c, GRASS_WILDDATA_LENGTH - ENTRY_SKIP_ENCOUNTER_RATES ; 6 ; to be at the right pointer to read the -1 if it's there, aka the mapgroup/num ptr
 	add hl, bc ; increment index without touching our wram index
 	; check to see if we've reached the end of the wild data file, -1
 	ld a, BANK(JohtoGrassWildMons)
@@ -706,8 +716,8 @@ Pokedex_DetailedArea_surf:
 	push bc ; line counter
 	push hl ; points to map group/num
 	; skip map encounter rates, surf only has one, grass has 3
-	inc hl
-	inc hl
+	inc hl ; map byte 1
+	inc hl ; map byte 2
 	inc hl ; should now point to lvl of encounter slot
 	inc hl ; now pointing to species
 ; morn
@@ -777,9 +787,14 @@ Pokedex_Parse_surf:
 	; 60%, 30%, 10%
 	push bc ; % and NUM_WATERMON
 .map_loop
+	push hl
 	ld a, BANK(JohtoWaterWildMons)
-	call GetFarByte ; bkup hl and change to getfarword for pk16?
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	; call GetFarByte ; bkup hl and change to getfarword for pk16?
+	pop hl
 	; a is species
+	inc hl ; species 2
 	inc hl ; pointing to next mon lvl
 	inc hl ; pointing to next mon species
 	; a is mon species 
@@ -898,14 +913,10 @@ Dex_Check_Grass:
 	ret z
 .landmark_loop
 	push hl ; points to map group/num
-	inc hl
-	inc hl
-	inc hl
-	inc hl ; should now point to lvl of encounter slot
-	inc hl ; now pointing to species
-	inc hl
+	ld bc, 6 ; 2 bytes for map group/num, 3 for 2% encounter bytes, 1 for lvl
+	add hl, bc
 	ld a, BANK(JohtoGrassWildMons)
-	call Pokedex_LookCheck_grass
+	call Pokedex_LookCheck_grass ; must be pointing to first species byte
 	and a
 	jr z, .found
 	pop hl ; points to map group/num
@@ -933,8 +944,13 @@ Pokedex_LookCheck_grass:
 	pop af
 	push af
 	push bc
-	call GetFarByte ; bkup hl and change to getfarword for pk16?
+	push hl
+	; get species
+	call GetFarWord ; bkup hl and change to getfarword for pk16?
+	call GetPokemonIDFromIndex
+	pop hl
 	; a is species
+	inc hl ; species 2
 	inc hl ; pointing to next mon lvl
 	inc hl ; pointing to next mon species
 	; a is mon species 
@@ -947,7 +963,7 @@ Pokedex_LookCheck_grass:
 	inc c
 	push bc ; % and NUM_GRASSMON
 	ld a, c
-	cp NUM_GRASSMON * 3
+	cp NUM_GRASSMON * 3 ; morn, day, nite
 	jr z, .map_loop_end ; end of wildmon entry, species not found in any time
 	pop bc
 	jr .map_loop
@@ -972,12 +988,12 @@ Dex_Check_Surf:
 	; db 15, WOOPER
 	; db 20, QUAGSIRE
 	; db 15, QUAGSIRE
-	inc hl
+	inc hl ; 2nd byte of map/group num
 	inc hl ; should now point to lvl of encounter slot
-	inc hl ; now pointing to species
-	inc hl
+	inc hl ; now pointing to species 1
+	inc hl ; species 2
+	; inc hl
 	ld a, BANK(JohtoWaterWildMons)
-	; ld a, BANK(KantoWaterWildMons)
 	call Pokedex_LookCheck_surf
 	and a
 	jr z, .found
@@ -989,8 +1005,7 @@ Dex_Check_Surf:
 	; check to see if there is a next entry
 	ld a, BANK(JohtoWaterWildMons)
 	call GetFarByte ; hl is preserved
-	cp -1
-	;jr z, .reached_end
+	cp -1 ; equivalent to map group/num word
 	ret z
 	; push hl ; hl is JohtoGrassWildMons, KantoGrassWildMons, or SwarmGrassWildMons
 	jr .landmark_loop
@@ -1007,8 +1022,13 @@ Pokedex_LookCheck_surf:
 	pop af
 	push af
 	push bc
-	call GetFarByte ; bkup hl and change to getfarword for pk16?
+	;	bank is already determined
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl; bkup hl and change to getfarword for pk16?
 	; a is species
+	inc hl ; species 2
 	inc hl ; pointing to next mon lvl
 	inc hl ; pointing to next mon species
 	; a is mon species 
@@ -1051,17 +1071,21 @@ Dex_Check_bugcontest:
 	cp -1
 	jr z, .notfound
 	; we arent at the end, so increment ptr by 1 and check species, that's all we care about
-	inc hl
+	inc hl ; now pointing to species
 	ld a, BANK(ContestMons)
-	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	ld c, a ; pokemon species of entry in ContestMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	jr z, .found
-	; species didnt match, inc hl by 3, need to check for -1
-	inc hl
-	inc hl
-	inc hl
+	; species didnt match, inc hl by 4, need to check for -1
+	inc hl ; second species byte
+	inc hl ; min lvl
+	inc hl ; max lvl
+	inc hl ; encounter % or -1
 	jr .loop
 .found
 	xor a
@@ -1108,13 +1132,17 @@ Pokedex_DetailedArea_bugcontest:
 	; we arent at the end, so increment ptr by 1 and check species, that's all we care about
 	inc hl
 	ld a, BANK(ContestMons)
-	call GetFarByte ;; will be -1 at the end, otherwise it's the % chance to encounter
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl ;; will be -1 at the end, otherwise it's the % chance to encounter
 	ld c, a ; pokemon species of entry in ContestMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	jr z, .found
-	; species didnt match, inc hl by 3, need to check for -1
+	; species didnt match, inc hl by 4, need to check for -1
 .continue
+	inc hl
 	inc hl
 	inc hl
 	inc hl
@@ -1363,21 +1391,26 @@ Dex_Check_casino:
 	xor a
 	ld [wPokedexEvoStage2], a
 	ld hl, CasinoMons ; pointing to johto casino map_id
-	inc hl
-	inc hl ; pointing to casino mon species
+	inc hl ; now pointing to 2nd byte of map/group 
+	inc hl ; pointing to casino mon species, 1st byte
 .loop ; for johto casino
 	ld a, BANK(CasinoMons)
 	call GetFarByte
 	cp -1
 	jr z, .check_kanto_casino
+	ld a, BANK(CasinoMons)
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl	
 	; we arent at the end yet, so this byte is the species
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	jr z, .found
-	; species didnt match, inc hl by 3, need to check for -1
+	; species didnt match, inc hl by 4, need to check for -1
 .loop_b	
-	ld de, 3 ; size of casinomon entry, 3 bytes
+	ld de, 4 ; size of casinomon entry, 3 bytes in vanilla, 4 in pk16: 2 bytes for species, 2 bytes for coins
 	add hl, de
 	jr .loop
 .check_kanto_casino
@@ -1386,7 +1419,9 @@ Dex_Check_casino:
 	jr nz, .notfound
 	inc a
 	ld [wPokedexEvoStage2], a
-	jr .loop_b
+	ld de, 3 ; hl was pointing to -1, need to get past map/group num
+	add hl, de
+	jr .loop
 .found
 	xor a
 	ret
@@ -1416,6 +1451,11 @@ Pokedex_DetailedArea_casino:
 	call GetFarByte
 	cp -1
 	jr z, .kanto_loop_setup
+	ld a, BANK(CasinoMons)
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl	
 	; we arent at the end yet, so this byte is the species
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
@@ -1423,7 +1463,7 @@ Pokedex_DetailedArea_casino:
 	cp c
 	call z, Print_casinomon
 	; inc hl by 3, need to check for -1
-	ld de, 3 ; size of casinomon entry, 3 bytes
+	ld de, 4 ; size of casinomon entry, 4 bytes
 	add hl, de
 	jr .johto_loop
 .kanto_loop_setup
@@ -1436,6 +1476,11 @@ Pokedex_DetailedArea_casino:
 	call GetFarByte
 	cp -1
 	jr z, .kanto_done
+	push hl
+	ld a, BANK(CasinoMons)
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl	
 	; we arent at the end yet, so this byte is the species
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
@@ -1443,8 +1488,8 @@ Pokedex_DetailedArea_casino:
 	push de ; kanto casino map_id ptr
 	cp c
 	call z, Print_casinomon
-	; inc hl by 3, need to check for -1
-	ld de, 3 ; size of casinomon entry, 3 bytes
+	; inc hl by 4, need to check for -1
+	ld de, 4 ; size of casinomon entry, 4 bytes
 	add hl, de
 	jr .kanto_loop
 .kanto_done
@@ -1462,7 +1507,6 @@ Pokedex_DetailedArea_casino:
 Print_casinomon:
 	; 'de' has casino map_id ptr
 	push hl ; current casinomon species ptr
-
 	ld h, d
 	ld l, e
 	ld a, BANK(CasinoMons)
@@ -1484,6 +1528,7 @@ Print_casinomon:
 	
 	pop hl ; current casinomon species ptr
 	push hl ; current casinomon species ptr
+	inc hl ; species 2nd byte
 	inc hl ; pointing to coins ptr
 	ld a, BANK(CasinoMons)
 	call GetFarWord ; hl contains coins
@@ -1548,7 +1593,10 @@ Dex_Check_npctrades:
 	jr z, .notfound
 
 	ld a, BANK(NPCTrades)
-	call GetFarByte
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
@@ -1598,7 +1646,10 @@ Pokedex_DetailedArea_npctrades:
 	jr z, .donedone
 
 	ld a, BANK(NPCTrades)
-	call GetFarByte
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
@@ -1643,8 +1694,9 @@ Dex_Print_TradeMon_Info:
 	; 'hl': blurb/hint: 	hlcoord 2, 11
 	push bc ; 'b' is current count out of max NUM_NPC_TRADES
 	; 'hl' is currently pointing to Target Trade Mon in NPCTrades
-	dec hl ; 'hl' now pointing to base of NPCTrades entry, Requested Species
-	dec hl
+	dec hl ; 2nd byte of requested species
+	dec hl ; 1st byte of Requested Species
+	dec hl ; 'hl' now pointing to base of NPCTrades entry
 	push hl ; pointing to base of NPCTrades entry, Requested Species
 	
 	; use 'b' to get map from NPCTradeMons_Locations
@@ -1684,7 +1736,10 @@ Dex_Print_TradeMon_Info:
 	ld a, [wTempSpecies]
 	push af ; real current mon species
 	ld a, BANK(NPCTrades)
-	call GetFarByte
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	ld [wCurSpecies], a
 	ld [wTempSpecies], a
 	call GetPokemonName
@@ -1778,13 +1833,19 @@ Dex_Check_eventmons:
 	call GetFarByte ; will be -1 at the end, otherwise it's the % chance to encounter
 	cp -1
 	jr z, .notfound
+
+	push hl
+	ld a, BANK(EventWildMons)
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl 	
 	; we arent at the end yet, so this byte is the species
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	jr z, .found
 	; species didnt match, inc hl by 7, need to check for -1
-	ld de, 7 ; size of specialencounter entry, 7 bytes
+	ld de, 8 ; size of specialencounter entry, 8 bytes for pk16
 	add hl, de
 	jr .loop
 .found
@@ -1796,7 +1857,7 @@ Dex_Check_eventmons:
 
 Pokedex_DetailedArea_eventmons:
 	; 'hl' is EventWildMons/GiftMons
-	ld c, 7 ; specialencounter is 7 bytes, need to check for -1
+	ld c, 8 ; specialencounter is 8 bytes, need to check for -1
 	ld a, [wPokedexStatus] ; wildmon index
 	call AddNTimes
 .loop	
@@ -1805,19 +1866,26 @@ Pokedex_DetailedArea_eventmons:
 	cp -1
 	jr z, .donedone
 
+	ld a, BANK(EventWildMons)
+	push hl
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
+
 	ld c, a ; pokemon species of entry in EventWildMons/GiftMons
 	ld a, [wCurSpecies] ; current pokedex entry species
 	cp c
 	jr z, .found
 .notfound	
 	; species didnt match, inc hl by 7, need to check for -1
-	ld de, 7 ; size of specialencounter entry, 7 bytes
+	ld de, 8 ; size of specialencounter entry, 8 bytes
 	add hl, de ; pointing to next species byte
 	call DexArea_IncWildMonIndex
 	jr .loop
 
 .found
 	; check event flag
+	inc hl ; now pointing to species 2
 	inc hl ; now pointing to event flag
 	push hl ; pointing to event flag constant
 	ld a, BANK(EventWildMons)

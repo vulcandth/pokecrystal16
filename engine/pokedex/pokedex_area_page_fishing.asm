@@ -43,7 +43,6 @@ Pokedex_DetailedArea_rods:
 	pop bc ; ; line counter, rod in b, maps in c
 	; push hl ; points to fishgroup, specific rod ptr
 	ld a, [wPokedexStatus] ; fish group starting at bit 3
-	; ld b,b
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	call Fishing_Print_Rod
 	push bc ; line counter, rod in b, maps in c, b has been inc'd
@@ -52,8 +51,6 @@ Pokedex_DetailedArea_rods:
 	ld [wPokedexEvoStage2], a
 	ld [wPokedexEvoStage3], a
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-	; ld b,b
 	ld a, [wPokedexStatus] ; fish group starting at bit 3
 	and 3 ; rod type mask, first 2 bits
 	cp 2 ; did we just print a super rod?
@@ -190,7 +187,6 @@ Fishing_Print_Rod:
 	push de ; day (e) /nite (d) encounter rates
 
 ; time of day icons	
-	; ld b,b
 	hlcoord 9, 11 ; same position regardless
 	call FishEntry_adjusthlcoord_rod ; current print line needs to be in c
 	ld [hl], $6b ; day icon tile
@@ -364,7 +360,6 @@ Check_Rods:
 Check_this_rod:
 ; day cumulative encounter %: ldh [hMultiplier], a
 ; nite cumulative encounter %: ldh [hMultiplicand],
-	; ld b,b
 	push hl
 	ld a, BANK(FishGroups)
 	call GetFarWord	
@@ -380,9 +375,13 @@ Check_this_rod:
 	ld b, c ; for the next entry's calculation, need raw % not the calculated difference
 	ld c, a ; adjusted %
 	
-	inc hl
+	inc hl ; PK16, now pointing to lvl of encounter
+	inc hl ; PK16 now pointing to species
+	push hl
 	ld a, BANK(FishGroups)
-	call GetFarByte ; successfuly gets the Species in the Rod table
+	call GetFarWord ; successfuly gets the Species in the Rod table
+	call GetPokemonIDFromIndex
+	pop hl
 	ld d, a
 	ld e, a
 	and a
@@ -398,10 +397,10 @@ Check_this_rod:
 	; pop af ; dont need this value (diff of entry %), clean stack
 .resume
 	ld a, b
-	cp 255 ; this is how we tell if we are looking at the last entry of the table (FF)
+	cp 255 ; this is how we tell if we are looking at the last entry of the table (FF), aka 100% since probability is out of 255
 	jr z, .end
 	; we have not reached the end, increment to next entry % loop
-	inc hl ; species
+	inc hl ; species 2
 	inc hl ; encounter level
 	jr .loop
 .found
@@ -429,18 +428,15 @@ Check_this_rod:
 	and a
 	ret nz
 	ld a, [wPokedexEvoStage3] ; will ret correct value if 0 or not
-	; and a
-	; ret nz
-	; xor a
 	; ; b should be this entry's percentage still, regardless of match or not
 	ret
 ;;;;;;;;;;;;;;;;;;;;;;;;; Main 3 Fishing Funcs End;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;; Fishing Utility Funcs ;;;;;;;;;;;;;;;;;;;;;;;
 Dex_FishTimeGroupsGet:
-	push hl
+	push hl ; currently pointing to species bytes which are zero, must go back one byte to get the right index for time
 	push bc
 	push af
-	inc hl
+	dec hl
 	ld a, BANK(FishGroups)
 	call GetFarByte ; index
 	; a is the index
@@ -451,13 +447,23 @@ Dex_FishTimeGroupsGet:
 	add hl, bc
 	add hl, bc
 	add hl, bc
+	add hl, bc
+	add hl, bc
+	inc hl
+	push hl
 	ld a, BANK(TimeFishGroups)
-	call GetFarByte
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	ld d, a ; species 1
 	inc hl
 	inc hl
+	inc hl
+	push hl
 	ld a, BANK(TimeFishGroups)
-	call GetFarByte
+	call GetFarWord
+	call GetPokemonIDFromIndex
+	pop hl
 	ld e, a ; species 2
 .done	
 	pop af
