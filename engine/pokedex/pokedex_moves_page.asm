@@ -1,6 +1,15 @@
 ; started as 5 before UI overhaul, now is 7
 ; would decrease to 3 if we wanted to use additional line for attack info
 DEF MAX_NUM_MOVES EQU 7
+
+Field_Moves_List: ; PK16 expanded moves, moves are now 2 bytes each!!
+	dw TELEPORT, SOFTBOILED, MILK_DRINK, \
+		HEADBUTT, ROCK_SMASH, SWEET_SCENT, DIG,\
+		CUT, FLY, SURF, STRENGTH, FLASH, WATERFALL, WHIRLPOOL
+Field_Moves_Method_List: ; PK16 THIS BRANCH ISNT USING EXPANDED ITEMS, but when we do, remember to switch from db to dw
+	db 0, 0, 0, TM01 + 1, TM01 + 7, TM01 + 11, TM01 + 27, HM01, \
+	HM01 + 1, HM01 + 2, HM01 + 3, HM01 + 4, HM01 + 5, HM01 + 6
+
 ; the category box is 2 tiles high, 12 tiles wide
 ; must fill in spaces to erase other text already printed
 ; top string goes in 8, 6, bottom in 8, 7
@@ -20,6 +29,28 @@ String_MOVE_text:
 	db "MOVE       @"
 String_TUTOR_text:
 	db " TUTOR     @"
+
+Pokedex_SkipEvolutions: ; ripped straight from engine\pokemon\evolve.asm
+	ld a, b
+	call GetFarByte
+	inc hl
+	and a
+	ret z
+	cp EVOLVE_STAT
+	jr nz, .no_extra_skip
+	inc hl
+.no_extra_skip
+	inc hl
+	inc hl
+	inc hl
+	jr Pokedex_SkipEvolutions
+
+Pokedex_GetNextEvoAttackByte: ; ripped straight from engine\pokemon\evolve.asm
+	ldh a, [hTemp]
+	call GetFarByte
+	inc hl
+	ret
+
 Print_Category_MOVES_text:
 	ld hl, String_MOVES_text
 	jp Print_Category_text
@@ -107,21 +138,16 @@ DisplayDexMonMoves::
 
 Pokedex_Calc_LvlMovesPtr:
 	ld a, [wTempSpecies]
-	dec a
-	ld b, 0
-	ld c, a
+	call GetPokemonIndexFromID
+	ld b, h
+	ld c, l
 	ld hl, EvosAttacksPointers
-	add hl, bc
-	add hl, bc
 	ld a, BANK(EvosAttacksPointers)
-	call GetFarWord
-.SkipEvoBytes	
-	ld a, BANK("Evolutions and Attacks Pointers")
-	call GetFarByte
-	inc hl
-	and a ; cp 0
-	jr nz, .SkipEvoBytes
-.CalcPageoffset
+	call LoadDoubleIndirectPointer
+	ldh [hTemp], a ; BANK("Evolutions and Attacks Pointers")
+	ld b, a
+	call Pokedex_SkipEvolutions ; ripped straight from Vulcandth's, would rather copy than farcall lol
+; .CalcPageoffset
 	call Pokedex_PrintPageNum ; page num is also returned in a
 	ld c, MAX_NUM_MOVES
 	call SimpleMultiply 
@@ -129,6 +155,8 @@ Pokedex_Calc_LvlMovesPtr:
 	; for p16, triple the num
 	ld b, 0
 	ld c, a
+	; PK16 expanded moves: triple, since each move entry is now 3 bytes instead of 2
+	add hl, bc
 	add hl, bc
 	add hl, bc
 	ret
@@ -138,11 +166,12 @@ Pokedex_Print_NextLvlMoves:
 	ld b, 0
 	ld c, 0 ; our move counter, max of MAX_NUM_MOVES
 .learnset_loop
-	ld a, BANK("Evolutions and Attacks Pointers")
-	call GetFarByte
+	; ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
+	; call GetFarByte ; lvl to learn move, or 0 (delimiter)
+	call Pokedex_GetNextEvoAttackByte ; hl now points to second byte of move
 	and a
 	jr z, .FoundEnd
-	push hl
+	push hl ; ; ptr to lvl to learn move, or 0 (delimiter)
 	ld [wTextDecimalByte], a
 	hlcoord 2, 9
 	call DexEntry_adjusthlcoord
@@ -150,33 +179,35 @@ Pokedex_Print_NextLvlMoves:
 	hlcoord 3, 9
 	call DexEntry_adjusthlcoord
 	ld de, wTextDecimalByte
-	push bc
+	push bc ; move counter
 	lb bc, PRINTNUM_LEFTALIGN | 1, 2
 	call PrintNum
-	pop bc 
-	pop hl
-	inc hl
-	push hl
-	ld a, BANK("Evolutions and Attacks Pointers")
-	call GetFarByte
+	pop bc ; move counter
+	pop hl ; hl now points to second byte of move ; ptr to lvl to learn move, or 0 (delimiter)
+	; inc hl ; points to first byte of move
+	push hl ; hl now points to second byte of move ; points to first byte of move
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
+	call GetFarWord
+	call GetMoveIDFromIndex
 	ld [wNamedObjectIndex], a
 	call GetMoveName
 	hlcoord 7, 9
 	call DexEntry_adjusthlcoord
-	push bc
+	push bc ; move counter
 	call PlaceString
-	pop bc
-	pop hl
-	inc hl
-	inc bc
+	pop bc ; move counter
+	pop hl ; points to first byte of move
+	inc hl ; points to second byte of move
+	inc hl ; points to next move entry's lvl learned
+	inc bc ; increment move counter
 	ld a, MAX_NUM_MOVES
 	cp c
 	jr nz, .learnset_loop
 	jr .MaxedPage
 .MaxedPage ; Printed MAX_NUM_MOVES moves. Moves are still left. Inc the Page counter
 	; check to see if really any moves left, we dont want a blank page
-	ld a, BANK("Evolutions and Attacks Pointers")
-	call GetFarByte
+	ldh a, [hTemp] ; BANK("Evolutions and Attacks Pointers")
+	call GetFarByte ; lvl to learn move, or 0 (delimiter)
 	and a
 	jr z, .FoundEnd
 	call DexEntry_IncPageNum
@@ -189,7 +220,7 @@ Pokedex_Print_NextLvlMoves:
 Pokedex_PrintFieldMoves:
 ; CheckLvlUpMoves, 1 for fail, 0 for yes, in c
 	call Pokedex_PrintPageNum ; page num is also returned in a
-	ld a, [wPokedexStatus] ; machine moves index
+	ld a, [wPokedexStatus] ; field moves index
 	ld b, a
 	ld c, 0 ; current line
 .fm_loop
@@ -197,8 +228,14 @@ Pokedex_PrintFieldMoves:
 	ld c, b
 	ld b, 0
 	ld hl, Field_Moves_List
-	add hl, bc
-	ld a, [hl]
+	add hl, bc ; since moves are 2 bytes
+	add hl, bc ; we need to add the index twice
+	ld e, [hl]
+	inc hl
+	ld d, [hl]
+	ld h, d
+	ld l, e
+	call GetMoveIDFromIndex
 	ld d, a
 	call Pokedex_CheckLvlUpMoves
 	ld a, c ; c has lvl we learn move
@@ -212,8 +249,16 @@ Pokedex_PrintFieldMoves:
 	ld c, b 
 	ld b, 0
 	ld hl, Field_Moves_List
-	add hl, bc
-	ld a, [hl]
+	add hl, bc ; since moves are 2 bytes
+	add hl, bc ; we need to add the index twice
+	push de
+	ld e, [hl]
+	inc hl
+	ld d, [hl]
+	ld h, d
+	ld l, e
+	pop de
+	call GetMoveIDFromIndex
 	ld d, a
 	ld [wPutativeTMHMMove], a
 	farcall CanLearnTMHMMove
@@ -344,14 +389,6 @@ Pokedex_PrintFieldMoves:
 	; a needs to be the TM/HM/MT item id	
 	; do not increment index, so it will print both on next page
 
-Field_Moves_List:
-	db TELEPORT, SOFTBOILED, MILK_DRINK, \
-		HEADBUTT, ROCK_SMASH, SWEET_SCENT, DIG,\
-		CUT, FLY, SURF, STRENGTH, FLASH, WATERFALL, WHIRLPOOL
-Field_Moves_Method_List:
-	db 0, 0, 0, TM01 + 1, TM01 + 7, TM01 + 11, TM01 + 27, HM01, \
-	HM01 + 1, HM01 + 2, HM01 + 3, HM01 + 4, HM01 + 5, HM01 + 6
-
 Pokedex_anymoreFieldMoves:
 	ld a, NUM_FIELD_MOVES - 1
 	cp b
@@ -364,7 +401,8 @@ Pokedex_anymoreFieldMoves:
 	ld e, b 
 	ld hl, Field_Moves_List
 	add hl, de
-	ld a, [hl]
+	add hl, de
+	call GetMoveIDFromIndex
 	ld d, a
 
 	call Pokedex_CheckLvlUpMoves
@@ -409,47 +447,29 @@ Pokedex_anymoreFieldMoves:
 Pokedex_CheckLvlUpMoves: ; used by pokedex field moves
 ; move looking for in 'd'
 	ld a, [wCurPartySpecies]
-	dec a
-	ld b, 0
-	ld c, a
+	; ld a, [wTempSpecies]
+	call GetPokemonIndexFromID
+	ld b, h
+	ld c, l
 	ld hl, EvosAttacksPointers
-	add hl, bc
-	add hl, bc
 	ld a, BANK(EvosAttacksPointers)
+	call LoadDoubleIndirectPointer
+	ldh [hTemp], a ; BANK("Evolutions and Attacks Pointers")
 	ld b, a
-	call GetFarWord
-	ld a, b
-	call GetFarByte
-	inc hl
-	and a
-	jr z, .find_move ; does not evolve
-	dec hl
-; Skip Evo Bytes
-; Receives a pointer to the evos and attacks for a mon in b:hl, and skips to the attacks.
-.skip_evo_bytes	
-	ld a, b
-	call GetFarByte
-	inc hl
-	and a
-	jr z, .find_move ; found end
-	cp EVOLVE_STAT
-	jr nz, .no_extra_skip
-	inc hl
-.no_extra_skip
-	inc hl
-	inc hl
-	jr .skip_evo_bytes
+	call Pokedex_SkipEvolutions ; ripped straight from Vulcandth's, would rather copy than farcall lol
 .find_move
-	ld a, BANK(EvosAttacksPointers)
-	call GetFarByte
-	inc hl
+	call Pokedex_GetNextEvoAttackByte ; inc's hl too, now pointint to first move byte
 	and a
-	jr z, .notfound ; end of mon's lvl up learnset
+	jr z, .notfound ; end of mon's lvl up learnset, 0 is the delimiter
 	ld c, a ; the lvl we learn move
-	ld a, BANK(EvosAttacksPointers)
-	call GetFarByte
-	inc hl
-	cp d ; 'd' is not clobbered in any of the used funcs or farcalls
+	push hl
+	ldh a, [hTemp]
+	call GetFarWord
+	call GetMoveIDFromIndex
+	pop hl
+	inc hl ; pointing to second move byte
+	inc hl ; pointing to lvl of next move entry, or 0 if we're at the end
+	cp d ; the move we're looking for, 'd' is not clobbered in any of the used funcs or farcalls
 	jr z, .found
 	jr .find_move
 .found
@@ -468,30 +488,37 @@ Pokedex_Calc_EggMovesPtr:
 	ld c, MAX_NUM_MOVES ; we can print MAX_NUM_MOVES Egg moves per page
 	call SimpleMultiply ; double this num and add to first byte after Evo's 0
 	ld b, 0
-	ld c, a
-	push bc
-; Step 4: Get First byte of learnset
-	callfar GetLowestEvolutionStage ; changes wCurPartyMon
-	callfar GetLowestEvolutionStage ; changes wCurPartyMon
+	ld c, a ; num of egg moves we've already printed on previous pages
+	push bc ; num of egg moves we've already printed on previous pages
+
 	ld a, [wCurPartySpecies]
-	dec a ; Bulbasaur is No 1 but entry ZERO
-	ld b, 0
-	ld c, a
-	ld hl, EggMovePointers
-	add hl, bc ; trying to add the species number in only 'a' will overflow a
-	add hl, bc ; add twice to double the index, words/PTRs are TWO bytes ea
-	ld a, [wCurSpecies]
-	ld [wCurPartySpecies], a
+	callfar GetLowestEvolutionStage ; uses wCurPartySpecies
+	ld a, [wCurPartySpecies]
+	callfar GetLowestEvolutionStage ; uses wCurPartySpecies
+	ld a, [wCurPartySpecies]
 	ld [wTempSpecies], a
+	ld [wCurSpecies], a
 	ld [wTempMonSpecies], a
 
-	ld a, BANK(EggMovePointers)
-	call GetFarWord
-.check_if_any
-	ld a, BANK(EggMovePointers); BANK("Egg Moves")
-	call GetFarByte ; a will be -1 if no egg moves
-	pop bc
+	call GetPokemonIndexFromID
+	ld b, h
+	ld c, l
+	ld hl, EggMovePointers
+	ld a, BANK(EggMovePointers)	
+	call LoadDoubleIndirectPointer
+	ldh [hTemp], a ; BANK("Egg Moves")
+	push hl
+	call GetFarWord ; a will be -1 in both bytes if no egg moves
+	ld d, h
+	ld e, l
+	pop hl
+	pop bc ; num of egg moves we've already printed on previous pages
 	add hl, bc
+	add hl, bc ; add twice since moves are now 2 bytes in PK16 expanded moves
+	ld a, d
+	cp -1
+	ret nz
+	ld a, e
 	cp -1
 	ret nz
 	; if we reach here, the mon has no egg moves at all
@@ -511,11 +538,17 @@ Pokedex_Print_Egg_moves:
 	ld c, 0 ; our move counter, max of MAX_NUM_MOVES - 1 for MAX_NUM_MOVES moves
 	; our adjusted pointer based on page num is in hl
 .Egg_loop
-	ld a, BANK(EggMovePointers); BANK("Egg Moves")
+	ldh a, [hTemp]; BANK("Egg Moves")
 	call GetFarByte ; EGG Move, or -1 for end
 	cp -1
 	jr z, .FoundEnd
-	inc hl ; Moves HL to next Byte
+	push hl
+	ldh a, [hTemp]; BANK("Egg Moves")
+	call GetFarWord ; EGG Move, or -1 for end
+	call GetMoveIDFromIndex	
+	pop hl
+	inc hl ; Moves HL to next Byte, 2nd byte of move
+	inc hl ; moves to first byte of next move, or -1
 	push hl
 	ld [wNamedObjectIndex], a ; all the "Name" Funcs use this 
 	call GetMoveName ; returns the string pointer in de
@@ -532,7 +565,7 @@ Pokedex_Print_Egg_moves:
 	jr .Egg_loop
 .MaxedPage ; Printed MAX_NUM_MOVES moves. Moves are still left. Inc the Page counter
 ; CheckNextByte, we dont want blank screen if we just printed last move in slot 5
-	ld a, BANK(EggMovePointers); BANK("Egg Moves")
+	ldh a, [hTemp]; BANK("Egg Moves")
 	call GetFarByte; Move # returned in "a"
 	cp -1
 	jr z, .FoundEnd
