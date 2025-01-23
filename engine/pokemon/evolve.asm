@@ -90,10 +90,10 @@ EvolveAfterBattle_MasterLoop:
 	ld c, a
 	ld a, [wTempMonLevel]
 	cp c
-	jp c, .skip_evolution_species_parameter
+	jp c, .skip_half_species_parameter
 
 	call IsMonHoldingEverstone
-	jp z, .skip_evolution_species_parameter
+	jp z, .skip_half_species_parameter
 
 	push hl
 	ld de, wTempMonAttack
@@ -116,10 +116,10 @@ EvolveAfterBattle_MasterLoop:
 .happiness
 	ld a, [wTempMonHappiness]
 	cp HAPPINESS_TO_EVOLVE
-	jp c, .skip_evolution_species_parameter
+	jp c, .skip_half_species_parameter
 
 	call IsMonHoldingEverstone
-	jp z, .skip_evolution_species_parameter
+	jp z, .skip_half_species_parameter
 
 	call GetNextEvoAttackByte
 	cp TR_ANYTIME
@@ -130,13 +130,13 @@ EvolveAfterBattle_MasterLoop:
 ; TR_NITE
 	ld a, [wTimeOfDay]
 	cp NITE_F
-	jp nz, .skip_half_species_parameter
+	jp nz, .skip_evolution_species
 	jr .proceed
 
 .happiness_daylight
 	ld a, [wTimeOfDay]
 	cp NITE_F
-	jp z, .skip_half_species_parameter
+	jp z, .skip_evolution_species
 	jr .proceed
 
 .trade
@@ -162,11 +162,11 @@ EvolveAfterBattle_MasterLoop:
 
 	ld a, [wLinkMode]
 	cp LINK_TIMECAPSULE
-	jp z, .skip_half_species_parameter
+	jp z, .skip_evolution_species
 
 	ld a, [wTempMonItem]
 	cp b
-	jp nz, .skip_half_species_parameter
+	jp nz, .skip_evolution_species
 
 	xor a
 	ld [wTempMonItem], a
